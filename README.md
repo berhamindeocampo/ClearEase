@@ -56,34 +56,50 @@ ClearEase provides a simple and organized way for students and school personnel 
 - Keeps student records organized and centralized
 - Speeds up the approval process for personnel
 
-## Project Structure (Suggested)
+## Project Structure
 
 ```
-clearease/
-├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── composables/
-│   ├── layouts/
-│   ├── pages/
-│   │   ├── student/
-│   │   ├── personnel/
-│   │   └── admin/
-│   ├── router/
-│   ├── stores/
-│   ├── types/
-│   ├── lib/
-│   │   └── supabase.ts
-│   ├── App.vue
-│   └── main.ts
-├── supabase/
-│   ├── migrations/
-│   └── functions/
-├── .env.example
-├── tailwind.config.ts
-├── tsconfig.json
-└── package.json
+ClearEase/
+├── backend/
+│   └── supabase/
+│       ├── .temp/
+│       └── config.toml
+└── frontend/
+    └── hello/
+        ├── .vscode/
+        ├── dist/
+        ├── node_modules/
+        ├── public/
+        ├── src/
+        │   ├── assets/
+        │   ├── components/
+        │   ├── composables/
+        │   ├── layouts/
+        │   ├── pages/
+        │   │   ├── student/
+        │   │   ├── personnel/
+        │   │   └── admin/
+        │   ├── router/
+        │   ├── stores/
+        │   ├── types/
+        │   ├── lib/
+        │   │   └── supabase.ts
+        │   ├── App.vue
+        │   └── main.ts
+        ├── .env
+        ├── .gitignore
+        ├── index.html
+        ├── package.json
+        ├── package-lock.json
+        ├── README.md
+        ├── tsconfig.json
+        ├── tsconfig.app.json
+        ├── tsconfig.node.json
+        └── vite.config.ts
 ```
+
+- **`backend/supabase`** — Supabase project config (`config.toml`), managed via the Supabase CLI. Migrations and edge functions live here once added.
+- **`frontend/hello`** — The Vue 3 + TypeScript + Tailwind app (Vite-powered), currently scaffolded with the default Vite project name `hello`. Rename this folder when the app identity is finalized.
 
 ## Database Schema (Supabase / Postgres)
 
@@ -104,23 +120,36 @@ Row Level Security (RLS) policies restrict:
 
 ## Getting Started
 
+### Backend (Supabase)
+
 ```bash
-# Clone the repository
-git clone <repo-url>
-cd clearease
+cd backend/supabase
+
+# Start local Supabase services (requires Supabase CLI + Docker)
+supabase start
+
+# Apply migrations
+supabase db push
+```
+
+### Frontend (Vue app)
+
+```bash
+cd frontend/hello
 
 # Install dependencies
 npm install
 
 # Set up environment variables
-cp .env.example .env
-# Add your Supabase URL and anon key
+# Create a .env file with your Supabase URL and anon key
 
 # Run the development server
 npm run dev
 ```
 
 ## Environment Variables
+
+`frontend/hello/.env`
 
 ```
 VITE_SUPABASE_URL=your-supabase-project-url
