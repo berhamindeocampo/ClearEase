@@ -12,10 +12,7 @@ ClearEase provides a simple and organized way for students and school personnel 
 - **Language:** TypeScript
 - **Styling:** Tailwind CSS
 - **Backend / Database:** Supabase (Postgres, Auth, Row Level Security, Realtime, Storage)
-- **State Management:** Pinia
 - **Routing:** Vue Router
-- **Forms & Validation:** VeeValidate + Zod
-- **Charts:** Chart.js / ApexCharts (admin reports)
 - **PDF Export:** jspdf / pdf-lib (printable clearance summary)
 
 ## User Roles
