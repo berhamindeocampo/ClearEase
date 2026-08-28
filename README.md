@@ -207,13 +207,6 @@ VITE_SUPABASE_URL=your-supabase-project-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
 
-## Roadmap
-
-- [ ] Email notifications via Supabase Edge Functions
-- [ ] QR code verification on printable clearance summary
-- [ ] Admin audit log page
-- [ ] Dark mode
-
 ## License
 
 This project is developed for academic purposes.
