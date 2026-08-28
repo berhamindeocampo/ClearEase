@@ -135,6 +135,33 @@ npm run dev
 
 Use a separate branch for project integration and feature work. Avoid pushing directly to `main` so changes can be reviewed and tested before they are merged.
 
+#### Team member workflow
+
+Each member should work on their own branch. Replace `YourNameBranch` with the branch assigned to you, such as `AmielBranch`.
+
+```bash
+# Clone the repository once
+git clone <repository-url>
+cd ClearEase
+
+# Check out your assigned branch
+git switch --track origin/YourNameBranch
+
+# Get the latest changes before working
+git pull
+```
+
+After making changes, commit and push them to your own branch:
+
+```bash
+git add .
+git commit -m "feat: describe your changes"
+npm run build
+git push
+```
+
+Do not push directly to `main` and do not merge your branch yourself. Open a Pull Request on GitHub from your branch into `main`. The project owner will review the changes, check the build, and merge the Pull Request.
+
 ```bash
 # From the repository root
 git switch -c your-feature-name
