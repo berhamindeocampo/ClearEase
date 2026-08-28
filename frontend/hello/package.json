@@ -11,10 +11,13 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.112.3",
     "@tailwindcss/vite": "^4.3.3",
+    "bcryptjs": "^3.0.3",
+    "lucide-vue-next": "^1.0.0",
     "tailwindcss": "^4.3.3",
     "vue": "^3.5.40"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24.13.3",
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/tsconfig": "^0.9.1",
