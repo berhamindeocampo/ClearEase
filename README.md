@@ -133,45 +133,27 @@ npm run dev
 
 ### Git Collaboration Workflow
 
-Use a separate branch for project integration and feature work. Avoid pushing directly to `main` so changes can be reviewed and tested before they are merged.
-
-#### Team member workflow
-
-Each member should work on their own branch. Replace `YourNameBranch` with the branch assigned to you, such as `AmielBranch`.
+Team members should push their completed work directly to the shared `main` branch. Do not push work to a separate branch unless the project owner asks you to do so. Because direct pushes skip pull request review, run the build before pushing.
 
 ```bash
-# Clone the repository once
-git clone <repository-url>
-cd ClearEase
+# From the repository root, make sure you are on main
+git switch main
+git pull origin main
 
-# Check out your assigned branch
-git switch --track origin/YourNameBranch
-
-# Get the latest changes before working
-git pull
-```
-
-After making changes, commit and push them to your own branch:
-
-```bash
-git add .
-git commit -m "feat: describe your changes"
-npm run build
-git push
-```
-
-Do not push directly to `main` and do not merge your branch yourself. Open a Pull Request on GitHub from your branch into `main`. The project owner will review the changes, check the build, and merge the Pull Request.
-
-```bash
-# From the repository root
-git switch -c your-feature-name
+# After making and testing your changes
 git add .
 git commit -m "Describe your change"
 npm run build
-git push -u origin your-feature-name
+git push origin main
 ```
 
-Create a pull request from your branch into `main` after the build succeeds.
+If Git rejects the push because another member has already pushed changes, update your local branch and retry:
+
+```bash
+git pull --rebase origin main
+npm run build
+git push origin main
+```
 
 To merge another repository into this project:
 
