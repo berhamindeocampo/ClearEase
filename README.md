@@ -57,46 +57,41 @@ ClearEase provides a simple and organized way for students and school personnel 
 
 ```
 ClearEase/
-├── backend/
-│   └── supabase/
-│       ├── .temp/
-│       └── config.toml
-└── frontend/
-    └── hello/
-        ├── .vscode/
-        ├── dist/
-        ├── node_modules/
-        ├── public/
-        ├── src/
-        │   ├── assets/
-        │   ├── components/
-        │   ├── composables/
-        │   ├── layouts/
-        │   ├── pages/
-        │   │   ├── student/
-        │   │   ├── personnel/
-        │   │   └── admin/
-        │   ├── router/
-        │   ├── stores/
-        │   ├── types/
-        │   ├── lib/
-        │   │   └── supabase.ts
-        │   ├── App.vue
-        │   └── main.ts
-        ├── .env
-        ├── .gitignore
-        ├── index.html
-        ├── package.json
-        ├── package-lock.json
-        ├── README.md
-        ├── tsconfig.json
-        ├── tsconfig.app.json
-        ├── tsconfig.node.json
-        └── vite.config.ts
+├── frontend/
+│   └── hello/
+│       ├── public/
+│       ├── src/
+│       │   ├── assets/
+│       │   ├── components/
+│       │   │   ├── Dashboard.vue
+│       │   │   ├── Login.vue
+│       │   │   └── Sidebar.vue
+│       │   ├── lib/
+│       │   │   └── supabase.ts
+│       │   ├── types/
+│       │   ├── App.vue
+│       │   ├── main.ts
+│       │   └── style.css
+│       ├── .env
+│       ├── .gitignore
+│       ├── index.html
+│       ├── package.json
+│       ├── package-lock.json
+│       ├── README.md
+│       ├── tsconfig.json
+│       ├── tsconfig.app.json
+│       ├── tsconfig.node.json
+│       └── vite.config.ts
+├── package.json
+└── README.md
 ```
 
-- **`backend/supabase`** — Supabase project config (`config.toml`), managed via the Supabase CLI. Migrations and edge functions live here once added.
-- **`frontend/hello`** — The Vue 3 + TypeScript + Tailwind app (Vite-powered), currently scaffolded with the default Vite project name `hello`. Rename this folder when the app identity is finalized.
+- **`frontend/hello`** — The Vue 3 + TypeScript + Tailwind app powered by Vite.
+- **`src/components`** — Reusable Vue components for the dashboard, sidebar, and login form.
+- **`src/lib/supabase.ts`** — Shared Supabase client configured through environment variables.
+- **`src/types`** — TypeScript type definitions used by the application.
+- **`dist`** and **`node_modules`** are generated locally and should not be committed.
+- Supabase backend configuration, migrations, and Edge Functions are not currently included in this workspace.
 
 ## Database Schema (Supabase / Postgres)
 
@@ -119,15 +114,7 @@ Row Level Security (RLS) policies restrict:
 
 ### Backend (Supabase)
 
-```bash
-cd backend/supabase
-
-# Start local Supabase services (requires Supabase CLI + Docker)
-supabase start
-
-# Apply migrations
-supabase db push
-```
+The Supabase backend is currently managed through the Supabase dashboard. Local Supabase configuration, migrations, and Edge Functions have not yet been added to this workspace.
 
 ### Frontend (Vue app)
 
@@ -143,6 +130,45 @@ npm install
 # Run the development server
 npm run dev
 ```
+
+### Git Collaboration Workflow
+
+Use a separate branch for project integration and feature work. Avoid pushing directly to `main` so changes can be reviewed and tested before they are merged.
+
+```bash
+# From the repository root
+git switch -c your-feature-name
+git add .
+git commit -m "Describe your change"
+npm run build
+git push -u origin your-feature-name
+```
+
+Create a pull request from your branch into `main` after the build succeeds.
+
+To merge another repository into this project:
+
+```bash
+git status
+git add .
+git commit -m "Save current ClearEase work"
+git switch -c integrate-other-project
+git remote add other <repository-url>
+git fetch other
+git merge other/main
+```
+
+If conflicts occur, resolve the marked files, then run:
+
+```bash
+git add <resolved-file>
+git commit
+npm install
+npm run build
+git push -u origin integrate-other-project
+```
+
+Keep `.env` files out of Git. Never commit Supabase service-role keys.
 
 ## Environment Variables
 
