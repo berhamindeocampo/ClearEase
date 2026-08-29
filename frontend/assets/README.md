@@ -57,33 +57,31 @@ ClearEase provides a simple and organized way for students and school personnel 
 
 ```
 ClearEase/
-├── frontend/
-│   └── assets/
-│       ├── public/
-│       ├── src/
-│       │   ├── assets/
-│       │   ├── components/
-│       │   │   ├── Dashboard.vue
-│       │   │   ├── Login.vue
-│       │   │   └── Sidebar.vue
-│       │   ├── lib/
-│       │   │   └── supabase.ts
-│       │   ├── types/
-│       │   ├── App.vue
-│       │   ├── main.ts
-│       │   └── style.css
-│       ├── .env
-│       ├── .gitignore
-│       ├── index.html
-│       ├── package.json
-│       ├── package-lock.json
-│       ├── README.md
-│       ├── tsconfig.json
-│       ├── tsconfig.app.json
-│       ├── tsconfig.node.json
-│       └── vite.config.ts
-├── package.json
-└── README.md
+└── frontend/
+    └── assets/
+        ├── public/
+        ├── src/
+        │   ├── assets/
+        │   ├── components/
+        │   │   ├── Dashboard.vue
+        │   │   ├── Login.vue
+        │   │   └── Sidebar.vue
+        │   ├── lib/
+        │   │   └── supabase.ts
+        │   ├── types/
+        │   ├── App.vue
+        │   ├── main.ts
+        │   └── style.css
+        ├── .env
+        ├── .gitignore
+        ├── index.html
+        ├── package.json
+        ├── package-lock.json
+        ├── README.md
+        ├── tsconfig.json
+        ├── tsconfig.app.json
+        ├── tsconfig.node.json
+        └── vite.config.ts
 ```
 
 - **`frontend/assets`** — The Vue 3 + TypeScript + Tailwind app powered by Vite.
@@ -133,50 +131,40 @@ npm run dev
 
 ### Git Collaboration Workflow
 
-Each member must work on their own branch. Members push their work to that branch; the project owner reviews and merges approved Pull Requests into `main`. Do not push directly to `main`.
+Use a separate branch for project integration and feature work. Avoid pushing directly to `main` so changes can be reviewed and tested before they are merged.
 
-#### Member instructions
-
-Clone the repository once, then switch to the branch assigned to you:
+#### Clone a repository
 
 ```bash
-git clone <repository-url>
-cd ClearEase
-git switch --track origin/YourBranchName
+cd path/to/ClearEase
+git clone <repository-url> other-project
+cd other-project
+npm install
 ```
 
-Before starting work each day, get the latest changes from your branch:
+#### Create a working branch
 
 ```bash
-git pull
+git switch -c integrate-other-project
 ```
 
-After making changes, test, commit, and push to your branch:
+Make and test your changes, then commit and push the branch:
+
+```bash
+git add .
+git commit -m "Merge project changes"
+npm run build
+git push -u origin integrate-other-project
+```
+
+Create a pull request from `integrate-other-project` into `main` after the build succeeds.
+
+#### Merge another repository into this project
+
+From the existing project directory:
 
 ```bash
 cd frontend/assets
-npm install
-npm run build
-git add .
-git commit -m "feat: describe your changes"
-git push
-```
-
-Create a Pull Request on GitHub from `YourBranchName` into `main`. Do not merge the Pull Request yourself unless the project owner asks you to.
-
-#### Project owner instructions
-
-Review the Pull Request, confirm that the build passes, and merge the branch into `main` on GitHub. After merging, members should update their local `main` before creating new branches:
-
-```bash
-git switch main
-git pull origin main
-git switch -c new-feature-name
-```
-
-To merge another repository into this project:
-
-```bash
 git status
 git add .
 git commit -m "Save current ClearEase work"
@@ -186,9 +174,10 @@ git fetch other
 git merge other/main
 ```
 
-If conflicts occur, resolve the marked files, then run:
+If Git reports conflicts, edit the marked files, then run:
 
 ```bash
+git status
 git add <resolved-file>
 git commit
 npm install
@@ -196,7 +185,7 @@ npm run build
 git push -u origin integrate-other-project
 ```
 
-Keep `.env` files out of Git. Never commit Supabase service-role keys.
+Keep `.env` files out of Git. They contain Supabase configuration and should never be committed. The Supabase publishable/anon key may be used in the frontend, but service-role keys must remain private.
 
 ## Environment Variables
 
@@ -206,6 +195,13 @@ Keep `.env` files out of Git. Never commit Supabase service-role keys.
 VITE_SUPABASE_URL=your-supabase-project-url
 VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 ```
+
+## Roadmap
+
+- [ ] Email notifications via Supabase Edge Functions
+- [ ] QR code verification on printable clearance summary
+- [ ] Admin audit log page
+- [ ] Dark mode
 
 ## License
 
