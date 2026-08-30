@@ -147,14 +147,13 @@ git switch --track origin/YourBranchName
 Before starting work each day, get the latest changes from your branch:
 
 ```bash
-git pull
-```
+# From the repository root, make sure you are on main
+git switch main
+git pull origin main
 
-After making changes, test, commit, and push to your branch:
-
-```bash
-cd frontend/assets
-npm install
+# After making and testing your changes
+git add .
+git commit -m "Describe your change"
 npm run build
 git add .
 git commit -m "feat: describe your changes"
