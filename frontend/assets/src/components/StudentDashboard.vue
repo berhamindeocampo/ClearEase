@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Bell, Check, Clock3, X } from 'lucide-vue-next'
 
 interface Activity {
@@ -11,7 +11,7 @@ interface Activity {
   date: string
 }
 
-const studentName = ref('Amiel')
+const studentName = ref('Student')
 const notificationCount = ref(2)
 const clearanceProgress = ref(50)
 const requirementsTotal = ref(8)
@@ -20,6 +20,34 @@ const requirementsPending = ref(3)
 const requirementsRejected = ref(1)
 const daysRemaining = ref(45)
 const lastUpdated = ref('Aug 29, 2026')
+
+onMounted(() => {
+  const session = localStorage.getItem('clearease-local-session')
+  const savedName = localStorage.getItem('clearease-user-name')
+  const savedEmail = localStorage.getItem('clearease-user-email')
+
+  if (session) {
+    try {
+      const user = JSON.parse(session)
+      if (user?.fullName) {
+        studentName.value = user.fullName
+        return
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (savedName) {
+    studentName.value = savedName
+    return
+  }
+
+  if (savedEmail) {
+    const localPart = savedEmail.split('@')[0]?.trim()
+    studentName.value = localPart ? localPart.charAt(0).toUpperCase() + localPart.slice(1) : 'Student'
+  }
+})
 
 const recentActivities = ref<Activity[]>([
   {
