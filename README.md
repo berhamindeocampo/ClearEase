@@ -13,7 +13,6 @@ ClearEase provides a simple and organized way for students and school personnel 
 - **Styling:** Tailwind CSS
 - **Backend / Database:** Supabase (Postgres, Auth, Row Level Security, Realtime, Storage)
 - **Routing:** Vue Router
-- **PDF Export:** jspdf / pdf-lib (printable clearance summary)
 
 ## User Roles
 
