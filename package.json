@@ -1,6 +1,16 @@
 {
+  "name": "clearease",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix frontend/assets",
+    "build": "npm run build --prefix frontend/assets",
+    "supabase:start": "cd backend && npx supabase start",
+    "supabase:stop": "cd backend && npx supabase stop"
+  },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
-    "@supabase/supabase-js": "^2.112.3"
+    "@supabase/supabase-js": "^2.112.3",
+    "pinia": "^4.0.3",
+    "vue-router": "^5.3.0"
   }
 }
