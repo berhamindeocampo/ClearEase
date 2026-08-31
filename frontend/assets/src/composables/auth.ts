@@ -17,11 +17,34 @@ const getLocalSession = () => {
   }
 }
 
-const saveLocalSession = (user: { email: string; fullName: string; studentId: string }) => {
+const saveLocalSession = (user: { email: string; fullName: string; studentId: string; role?: string }) => {
   if (typeof window === 'undefined') return
   localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(user))
   localStorage.setItem(LEGACY_USER_NAME_KEY, user.fullName)
   localStorage.setItem(LEGACY_USER_EMAIL_KEY, user.email)
+}
+
+const resolveUserRole = async (email: string): Promise<'student' | 'admin'> => {
+  if (!supabase) {
+    const session = getLocalSession()
+    return session?.role === 'admin' ? 'admin' : 'student'
+  }
+
+  const { data, error } = await supabase
+    .from('admin')
+    .select('email')
+    .eq('email', email)
+    .maybeSingle()
+
+  if (!error && data) {
+    return 'admin'
+  }
+
+  if (error && !['42P01', '42703'].includes(error.code || '')) {
+    console.warn('Admin table check failed:', error.message)
+  }
+
+  return 'student'
 }
 
 const clearLocalSession = () => {
@@ -46,16 +69,20 @@ export const useAuth = () => {
         throw new Error('An account with this email already exists.')
       }
 
+      const role = 'student'
+
       saveLocalSession({
         email: data.email,
         fullName: data.fullName,
         studentId: data.studentId,
+        role,
       })
 
       return {
         user: {
           id: 'local-user',
           email: data.email,
+          role,
         },
       }
     }
@@ -77,13 +104,16 @@ export const useAuth = () => {
       throw error
     }
 
+    const role = await resolveUserRole(data.email)
+
     saveLocalSession({
       email: data.email,
       fullName: data.fullName,
       studentId: data.studentId,
+      role,
     })
 
-    return { user: { id: inserted?.[0]?.id ?? 'supabase-user', email: data.email } }
+    return { user: { id: inserted?.[0]?.id ?? 'supabase-user', email: data.email, role } }
   }
 
   const logIn = async (email: string, password: string) => {
@@ -91,11 +121,19 @@ export const useAuth = () => {
       const session = getLocalSession()
 
       if (session && session.email.toLowerCase() === email.toLowerCase()) {
-        saveLocalSession(session)
+        const role = session.role === 'admin' ? 'admin' : 'student'
+        saveLocalSession({
+          email: session.email,
+          fullName: session.fullName,
+          studentId: session.studentId,
+          role,
+        })
+
         return {
           user: {
             id: 'local-user',
             email,
+            role,
           },
         }
       }
@@ -114,20 +152,52 @@ export const useAuth = () => {
       throw error
     }
 
-    if (!data) {
+    if (data) {
+      const role = await resolveUserRole(data.email)
+
+      saveLocalSession({
+        email: data.email,
+        fullName: data.full_name,
+        studentId: data.student_id,
+        role,
+      })
+
+      return {
+        user: {
+          id: data.id,
+          email: data.email,
+          role,
+        },
+      }
+    }
+
+    const { data: adminData, error: adminError } = await supabase
+      .from('admin')
+      .select('*')
+      .eq('email', email)
+      .eq('password', password)
+      .maybeSingle()
+
+    if (adminError) {
+      throw adminError
+    }
+
+    if (!adminData) {
       throw new Error('Invalid login credentials')
     }
 
     saveLocalSession({
-      email: data.email,
-      fullName: data.full_name,
-      studentId: data.student_id,
+      email: adminData.email,
+      fullName: adminData.full_name || adminData.fullName || 'Admin',
+      studentId: adminData.student_id || 'ADMIN',
+      role: 'admin',
     })
 
     return {
       user: {
-        id: data.id,
-        email: data.email,
+        id: adminData.id,
+        email: adminData.email,
+        role: 'admin',
       },
     }
   }
@@ -144,7 +214,7 @@ export const useAuth = () => {
   const getCurrentUser = async () => {
     const session = getLocalSession()
     if (session) {
-      return { id: 'local-user', email: session.email }
+      return { id: 'local-user', email: session.email, role: session.role || 'student' }
     }
 
     if (!supabase) {

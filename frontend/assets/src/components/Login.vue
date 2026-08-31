@@ -53,7 +53,14 @@ const handleLogIn = async (): Promise<void> => {
   errors.value = {}
 
   try {
-    await logIn(formData.value.email, formData.value.password)
+    const response = await logIn(formData.value.email, formData.value.password)
+    const role = response?.user?.role || 'student'
+
+    if (role === 'admin') {
+      router.push('/admindashboard')
+      return
+    }
+
     router.push('/dashboard')
   } catch (error: any) {
     errors.value.submit = error?.message || 'Failed to log in. Please check your credentials.'

@@ -15,10 +15,11 @@ const route = useRoute()
 const isMobileMenuOpen = ref(false)
 
 const navItems: NavItem[] = [
-  { id: 1, label: 'Dashboard', path: '/dashboard' },
-  { id: 2, label: 'Clearance', path: '/clearance' },
-  { id: 3, label: 'Requirements', path: '/requirements' },
-  { id: 4, label: 'Profile', path: '/profile' }
+  { id: 1, label: 'Dashboard', path: '/admindashboard' },
+  { id: 2, label: 'Accounts', path: '/admin/accounts' },
+  { id: 3, label: 'Clearances', path: '/admin/clearances' },
+  { id: 4, label: 'Requirements', path: '/admin/requirements' },
+  { id: 5, label: 'Department', path: '/admin/department' }
 ]
 
 const isActive = (path: string): boolean => {

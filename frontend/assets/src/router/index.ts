@@ -2,9 +2,15 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { supabase } from '../composables/auth'
 import LandingPage from '../components/LandingPage.vue'
 import StudentDashboard from '../components/StudentDashboard.vue'
+import Requirements from '../components/Requirements.vue'
 import Login from '../components/Login.vue'
 import SignIn from '../components/SignIn.vue'
 import Profiles from '../components/Profiles.vue'
+import AdminDashboard from '../components/AdminDashboard.vue'
+import AdminAccounts from '../components/AdminAccounts.vue'
+import AdminClearances from '../components/AdminClearances.vue'
+import AdminRequirements from '../components/AdminRequirements.vue'
+import AdminDepartment from '../components/AdminDepartment.vue'
 
 const publicRoutes = ['landing', 'login', 'signin']
 const getLocalSession = () => {
@@ -46,15 +52,40 @@ const router = createRouter({
       component: StudentDashboard,
     },
     {
-      path: '/notifications',
-      name: 'notifications',
-      component: StudentDashboard,
+      path: '/requirements',
+      name: 'requirements',
+      component: Requirements,
     },
     {
       path: '/profile',
       name: 'profile',
       component: Profiles,
       alias: ['/profiles'],
+    },
+    {
+      path: '/admindashboard',
+      name: 'admin',
+      component: AdminDashboard,
+    },
+    {
+      path: '/admin/accounts',
+      name: 'admin-accounts',
+      component: AdminAccounts,
+    },
+    {
+      path: '/admin/clearances',
+      name: 'admin-clearances',
+      component: AdminClearances,
+    },
+    {
+      path: '/admin/requirements',
+      name: 'admin-requirements',
+      component: AdminRequirements,
+    },
+    {
+      path: '/admin/department',
+      name: 'admin-department',
+      component: AdminDepartment,
     },
     {
       path: '/:pathMatch(.*)*',
@@ -65,6 +96,11 @@ const router = createRouter({
 
 router.beforeEach(async (to, _from, next) => {
   const isPublicRoute = to.name && publicRoutes.includes(String(to.name))
+  const isAdminRoute =
+    to.path === '/admindashboard' ||
+    to.path.startsWith('/admin/') ||
+    to.name === 'admin' ||
+    ['admin-accounts', 'admin-clearances', 'admin-requirements', 'admin-department'].includes(String(to.name))
 
   if (isPublicRoute) {
     next()
@@ -73,6 +109,11 @@ router.beforeEach(async (to, _from, next) => {
 
   const localSession = getLocalSession()
   if (localSession) {
+    if (isAdminRoute && localSession.role !== 'admin') {
+      next('/dashboard')
+      return
+    }
+
     next()
     return
   }
@@ -88,6 +129,26 @@ router.beforeEach(async (to, _from, next) => {
     } = await supabase.auth.getSession()
 
     if (session) {
+      const sessionEmail = session.user?.email
+      const fallbackRole = sessionEmail ? await (async () => {
+        const { data, error } = await supabase
+          .from('admin')
+          .select('email')
+          .eq('email', sessionEmail)
+          .maybeSingle()
+
+        if (!error && data) {
+          return 'admin'
+        }
+
+        return 'student'
+      })() : 'student'
+
+      if (isAdminRoute && fallbackRole !== 'admin') {
+        next('/dashboard')
+        return
+      }
+
       next()
       return
     }

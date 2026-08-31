@@ -14,8 +14,13 @@ import Header from './components/Header.vue'
 
 const route = useRoute()
 const isLandingPage = computed(() => route.name === 'landing')
-const hideHeaderRoutes = ['login', 'signin']
-const showHeader = computed(() => !isLandingPage.value && !hideHeaderRoutes.includes(String(route.name)))
+const isAdminRoute = computed(() => route.path === '/admindashboard' || route.path.startsWith('/admin/'))
+const hideHeaderRoutes = ['login', 'signin', 'admin', 'admin-accounts', 'admin-clearances', 'admin-requirements', 'admin-department']
+const showHeader = computed(() =>
+  !isLandingPage.value &&
+  !isAdminRoute.value &&
+  !hideHeaderRoutes.includes(String(route.name))
+)
 </script>
 
 <style>

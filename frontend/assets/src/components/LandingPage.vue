@@ -15,23 +15,23 @@ const goToSignIn = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-    <!-- Header/Navigation -->
-    <header class="bg-white shadow-sm">
-      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-        <div class="flex items-center">
-          <img :src="cleareaseLogo" alt="ClearEase Logo" class="h-10 object-contain" />
+  <div class="min-h-screen bg-[#dfeaf4]">
+    <header class="sticky top-0 z-50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-b border-[#dfe3ea]">
+      <nav class="max-w-[1500px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3 shrink-0">
+          <img :src="cleareaseLogo" alt="ClearEase Logo" class="h-20 w-auto sm:h-24 md:h-28 object-contain" />
         </div>
-        <div class="flex gap-4">
+
+        <div class="flex items-center gap-4 ml-auto">
           <button
             @click="goToLogin"
-            class="px-6 py-2 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition"
+            class="px-7 py-3 rounded-full bg-[#8d63e8] text-white text-lg font-semibold shadow-[0_4px_12px_rgba(141,99,232,0.35)] hover:bg-[#7f55dd] transition"
           >
             Log In
           </button>
           <button
             @click="goToSignIn"
-            class="px-6 py-2 rounded-full bg-purple-600 text-white hover:bg-purple-700 transition"
+            class="px-7 py-3 rounded-full bg-[#8d63e8] text-white text-lg font-semibold shadow-[0_4px_12px_rgba(141,99,232,0.35)] hover:bg-[#7f55dd] transition"
           >
             Sign In
           </button>
@@ -39,7 +39,6 @@ const goToSignIn = () => {
       </nav>
     </header>
 
-    <!-- Hero Section -->
     <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
         <!-- Left Content -->
@@ -57,7 +56,6 @@ const goToSignIn = () => {
           </p>
         </div>
 
-        <!-- Right Content - Dashboard Preview -->
         <div class="relative">
           <div class="bg-white rounded-lg shadow-2xl p-6 border border-gray-100">
             <!-- Dashboard Header -->
@@ -84,7 +82,6 @@ const goToSignIn = () => {
               </div>
             </div>
 
-            <!-- Status Cards -->
             <div class="grid grid-cols-2 gap-4 mb-6">
               <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div class="text-3xl font-bold text-blue-600">8</div>
@@ -104,7 +101,6 @@ const goToSignIn = () => {
               </div>
             </div>
 
-            <!-- Progress Section -->
             <div class="grid grid-cols-2 gap-4 mb-6">
               <div class="bg-gradient-to-br from-purple-100 to-purple-50 border border-purple-200 rounded-lg p-4">
                 <div class="flex items-center justify-between mb-2">
@@ -128,7 +124,6 @@ const goToSignIn = () => {
                 </div>
               </div>
 
-              <!-- Recent Activity -->
               <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <div class="text-sm font-semibold text-gray-700 mb-3">Recent Activity</div>
                 <div class="space-y-2 text-xs">
@@ -151,7 +146,6 @@ const goToSignIn = () => {
               </div>
             </div>
 
-            <!-- Profile Section -->
             <div class="flex items-center justify-between">
               <div />
               <div class="w-12 h-12 bg-gradient-to-br from-purple-600 to-purple-400 rounded-full flex items-center justify-center text-white font-bold text-lg cursor-pointer hover:shadow-lg transition">
@@ -163,7 +157,6 @@ const goToSignIn = () => {
       </div>
     </section>
 
-    <!-- Features Section -->
     <section class="bg-white py-20">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 class="text-4xl font-bold text-center mb-16">
@@ -171,7 +164,6 @@ const goToSignIn = () => {
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <!-- Clearance Tracking -->
           <div class="text-center">
             <div class="inline-flex w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
               <Clock3 class="w-8 h-8 text-purple-600" />
@@ -182,7 +174,6 @@ const goToSignIn = () => {
             </p>
           </div>
 
-          <!-- Real time updates -->
           <div class="text-center">
             <div class="inline-flex w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
               <BellRing class="w-8 h-8 text-purple-600" />
@@ -193,7 +184,6 @@ const goToSignIn = () => {
             </p>
           </div>
 
-          <!-- Simple Process -->
           <div class="text-center">
             <div class="inline-flex w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
               <CheckCheck class="w-8 h-8 text-purple-600" />
@@ -204,7 +194,6 @@ const goToSignIn = () => {
             </p>
           </div>
 
-          <!-- Secured Records -->
           <div class="text-center">
             <div class="inline-flex w-20 h-20 bg-purple-100 rounded-full items-center justify-center mb-4">
               <ShieldCheck class="w-8 h-8 text-purple-600" />
@@ -218,7 +207,6 @@ const goToSignIn = () => {
       </div>
     </section>
 
-    <!-- CTA Section -->
     <section class="bg-gradient-to-r from-purple-50 to-blue-50 py-20">
       <div class="max-w-2xl mx-auto text-center px-4 sm:px-6 lg:px-8">
         <h2 class="text-3xl font-bold text-gray-800 mb-4">

@@ -69,8 +69,8 @@ const syncStudentFromSession = () => {
     fullName: sessionUser.fullName || 'Student',
     initials: getInitials(sessionUser.fullName || 'Student'),
     studentId: sessionUser.studentId || 'N/A',
-    gradeLevel: 'Grade 12 - STEM',
-    section: 'STEM - A',
+    gradeLevel: 'Grade 12 - GAS',
+    section: 'GAS-B',
     email: sessionUser.email || '',
     contactNumber: '+63 917 123 4567',
     password: ''
@@ -92,12 +92,10 @@ const passwordForm = ref<PasswordFormState>({
   confirmPassword: ''
 });
 
-// --- Computed Properties ---
 const maskedPassword = computed(() => {
   return '*'.repeat(8); // Always shows exactly 8 asterisks as per the image
 });
 
-// --- Methods ---
 const togglePasswordForm = () => {
   showPasswordForm.value = !showPasswordForm.value;
   errorMessage.value = '';
@@ -114,7 +112,6 @@ const togglePasswordForm = () => {
 const handleUpdatePassword = () => {
   errorMessage.value = '';
   
-  // Basic Frontend Validation
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
     errorMessage.value = 'New passwords do not match.';
     return;
