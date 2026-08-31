@@ -64,17 +64,17 @@ ClearEase/
 │       │   ├── components/
 │       │   │   ├── AdminAccounts.vue
 │       │   │   ├── AdminClearances.vue
-│       │   │   ├──  AdminDashboard.vue
-|       |   |   ├──  AdminDepartment.vue
+│       │   │   ├── AdminDashboard.vue
+|       |   |   ├── AdminDepartment.vue
 │       │   │   ├── AdminHeader.vue
-│       │   │   ├──  AdminRequirements.vue
-|       |   |   ├──  Header.vue
+│       │   │   ├── AdminRequirements.vue
+|       |   |   ├── Header.vue
 │       │   │   ├── LandingPage.vue
-│       │   │   ├──  Login.vue
-|       |   |   ├──  Profiles.vue
+│       │   │   ├── Login.vue
+|       |   |   ├── Profiles.vue
 │       │   │   ├── Requirements.vue
-│       │   │   ├──  SignIn.vue
-|       |   |   ├──  StudentClearance.vue - In progress
+│       │   │   ├── SignIn.vue
+|       |   |   ├── StudentClearance.vue - In progress
 │       │   │   ├── StudentDashboard.vue
 |       |   ├── composables/
 |       |   |    └── auth.ts
