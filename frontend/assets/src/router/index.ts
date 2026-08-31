@@ -5,6 +5,7 @@ import StudentDashboard from '../components/StudentDashboard.vue'
 import Login from '../components/Login.vue'
 import SignIn from '../components/SignIn.vue'
 import Profiles from '../components/Profiles.vue'
+import AdminDashboard from '../components/AdminDashboard.vue'
 
 const publicRoutes = ['landing', 'login', 'signin']
 const getLocalSession = () => {
@@ -55,6 +56,12 @@ const router = createRouter({
       name: 'profile',
       component: Profiles,
       alias: ['/profiles'],
+    },
+    {
+      path: '/admindashboard',
+      name: 'admindashboard',
+      component: AdminDashboard,
+      alias: ['/admindashboard'],
     },
     {
       path: '/:pathMatch(.*)*',
