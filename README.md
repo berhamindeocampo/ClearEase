@@ -62,11 +62,26 @@ ClearEase/
 │       ├── src/
 │       │   ├── assets/
 │       │   ├── components/
-│       │   │   ├── Dashboard.vue
+│       │   │   ├── AdminAccounts.vue
+│       │   │   ├── AdminClearances.vue
+│       │   │   ├── AdminDashboard.vue
+|       |   |   ├── AdminDepartment.vue
+│       │   │   ├── AdminHeader.vue
+│       │   │   ├── AdminRequirements.vue
+|       |   |   ├── Header.vue
+│       │   │   ├── LandingPage.vue
 │       │   │   ├── Login.vue
-│       │   │   └── Sidebar.vue
+|       |   |   ├── Profiles.vue
+│       │   │   ├── Requirements.vue
+│       │   │   ├── SignIn.vue
+|       |   |   ├── StudentClearance.vue - In progress
+│       │   │   ├── StudentDashboard.vue
+|       |   ├── composables/
+|       |   |    └── auth.ts
 │       │   ├── lib/
 │       │   │   └── supabase.ts
+|       |   ├── router/
+|       |   |    └── index.ts
 │       │   ├── types/
 │       │   ├── App.vue
 │       │   ├── main.ts
@@ -82,6 +97,7 @@ ClearEase/
 │       ├── tsconfig.node.json
 │       └── vite.config.ts
 ├── package.json
+├── tailwind.config.js
 └── README.md
 ```
 
