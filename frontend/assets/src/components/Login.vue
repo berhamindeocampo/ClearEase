@@ -73,21 +73,21 @@ const handleLogIn = async (): Promise<void> => {
 <template>
   <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-8">
     <div class="w-full max-w-[980px]">
-      <div class="flex justify-center mb-6">
-        <img
-          :src="universityLogo"
-          alt="St. Paul University"
-          class="h-20 md:h-24 object-contain"
-        />
+      <div class="mb-6 flex justify-center">
+          <img
+            :src="universityLogo"
+            alt="St. Paul University"
+            class="h-16 w-auto object-contain md:h-20"
+          />
       </div>
 
       <div class="mx-auto w-full max-w-[520px] rounded-[28px] bg-white/90 p-6 shadow-[0_18px_40px_rgba(56,34,75,0.12)] md:p-8">
-        <div class="flex justify-center mb-6">
+        <div class="mb-6 flex justify-center">
           <img
-            :src="cleareaseLogo"
-            alt="ClearEase Logo"
-            class="h-20 md:h-24 object-contain"
-          />
+              :src="cleareaseLogo"
+              alt="ClearEase Logo"
+              class="h-20 w-auto object-contain md:h-24"
+            />
         </div>
 
         <h1 class="text-center text-4xl font-bold text-gray-900">Welcome!</h1>
