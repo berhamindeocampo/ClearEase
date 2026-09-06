@@ -1,66 +1,50 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { Search, Filter, BookOpen, Landmark, BadgeCheck, FlaskConical, Brain, Upload } from 'lucide-vue-next'
 import StudentSubmitPopup from '../popups/StudentSubmitPopup.vue'
 import StudentViewDetailsPopup from '../popups/StudentViewDetailsPopup.vue'
+import { displayDate, fetchRows } from '../lib/database'
 
 const searchQuery = ref('')
 const activeFilter = ref('All')
 const selectedRequirement = ref<number | null>(null)
 const activePopup = ref<'details' | 'submit' | null>(null)
 
-const requirements = ref([
-  {
-    id: 1,
-    title: 'Library Clearance',
-    department: 'Library',
-    requiredDocument: 'Library Form',
-    instruction: 'Submit Form',
-    deadline: 'Sep 2, 2024',
-    status: 'Pending',
-    icon: BookOpen,
-  },
-  {
-    id: 2,
-    title: 'Finance Clearance',
-    department: 'Finance',
-    requiredDocument: 'Finance Form',
-    instruction: 'Submit Form',
-    deadline: 'Sep 2, 2024',
-    status: 'In Review',
-    icon: Landmark,
-  },
-  {
-    id: 3,
-    title: 'Registrar Clearance',
-    department: 'Registrar',
-    requiredDocument: 'Registration Record',
-    instruction: 'Clearance completed',
-    deadline: '—',
-    status: 'Cleared',
-    icon: BadgeCheck,
-  },
-  {
-    id: 4,
-    title: 'EmpTech Project',
-    department: 'IT Department',
-    requiredDocument: 'Project File',
-    instruction: 'Submit final output',
-    deadline: 'Sep 10, 2024',
-    status: 'Pending',
-    icon: FlaskConical,
-  },
-  {
-    id: 5,
-    title: 'PerDev Portfolio',
-    department: 'Student Affairs',
-    requiredDocument: 'Portfolio',
-    instruction: 'Submit proof of completion',
-    deadline: 'Sep 15, 2024',
-    status: 'Pending',
-    icon: Brain,
-  },
-])
+const requirements = ref<Array<{ id: number; title: string; department: string; requiredDocument: string; instruction: string; deadline: string; status: string; icon: typeof BookOpen }>>([])
+const isLoading = ref(true)
+const loadError = ref('')
+
+const iconFor = (value: string) => {
+  const normalized = value.toLowerCase()
+  if (normalized.includes('finance')) return Landmark
+  if (normalized.includes('registrar')) return BadgeCheck
+  if (normalized.includes('project') || normalized.includes('emptech')) return FlaskConical
+  if (normalized.includes('portfolio') || normalized.includes('perdev')) return Brain
+  return BookOpen
+}
+
+async function loadRequirements() {
+  const [requirementsResult, submissionsResult] = await Promise.all([fetchRows('requirements'), fetchRows('clearance_submissions')])
+  loadError.value = requirementsResult.error || submissionsResult.error || ''
+  const session = JSON.parse(localStorage.getItem('clearease-local-session') || 'null') as { studentId?: string } | null
+  const studentSubmissions = submissionsResult.data.filter((row) => !session?.studentId || String(row.student_id) === session.studentId)
+  requirements.value = requirementsResult.data.map((row, index) => {
+    const submission = studentSubmissions.find((item) => String(item.requirement_id) === String(row.id))
+    return {
+      id: Number(row.id) || index + 1,
+      title: String(row.title || row.name || 'Requirement'),
+      department: String(row.department_name || row.department || row.department_id || '—'),
+      requiredDocument: String(row.required_document || row.document || '—'),
+      instruction: String(row.instruction || row.instructions || '—'),
+      deadline: displayDate(row.deadline),
+      status: String(submission?.status || 'Pending'),
+      icon: iconFor(String(row.title || row.name || '')),
+    }
+  })
+  isLoading.value = false
+}
+
+onMounted(loadRequirements)
 
 const filteredRequirements = computed(() => {
   return requirements.value.filter((item) => {
@@ -133,7 +117,10 @@ const selectedItem = computed(() => requirements.value.find((item) => item.id ==
           <div class="text-right">Action</div>
         </div>
 
-        <div v-for="item in filteredRequirements" :key="item.id" class="grid grid-cols-[1.8fr_1.3fr_1.4fr_1.5fr_0.9fr_1.1fr] items-center gap-3 border-b border-[#edf0f4] px-4 py-4 last:border-b-0 text-sm text-slate-700">
+        <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading requirements...</div>
+        <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
+        <div v-else-if="filteredRequirements.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No requirements found.</div>
+        <div v-for="item in filteredRequirements" v-else :key="item.id" class="grid grid-cols-[1.8fr_1.3fr_1.4fr_1.5fr_0.9fr_1.1fr] items-center gap-3 border-b border-[#edf0f4] px-4 py-4 last:border-b-0 text-sm text-slate-700">
           <div class="flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center rounded-lg border border-[#e8e2f7] bg-[#f2ebff] text-[#7c4fe0]">
               <component :is="item.icon" class="h-4 w-4" />

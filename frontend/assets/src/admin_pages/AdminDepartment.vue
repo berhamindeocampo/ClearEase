@@ -1,17 +1,39 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import AdminHeader from '../headers/AdminHeader.vue'
 import AdminAddDepartmentPopup from '../popups/AdminAddDepartmentPopup.vue'
 import AdminManagePopup from '../popups/AdminManagePopup.vue'
+import { fetchRows } from '../lib/database'
 
-const departments = [
-  { name: 'Pr 1', requirement: 'Research Paper', personnel: '1 personnel', action: 'Manage' },
-  { name: 'Finance', requirement: 'Finance Form', personnel: '2 personnel', action: 'Manage' },
-  { name: 'Oral Com', requirement: 'Essay', personnel: '1 personnel', action: 'Manage' },
-  { name: 'Library', requirement: 'Library Form', personnel: '2 personnel', action: 'Manage' },
-]
+const departments = ref<Array<{ name: string; requirement: string; personnel: string; action: string }>>([])
+const searchQuery = ref('')
+const isLoading = ref(true)
+const loadError = ref('')
 const activePopup = ref<'add' | 'manage' | null>(null)
-const selectedDepartment = ref<(typeof departments)[number] | null>(null)
+const selectedDepartment = ref<(typeof departments.value)[number] | null>(null)
+
+async function loadDepartments() {
+  const [departmentResult, requirementResult, personnelResult] = await Promise.all([
+    fetchRows('departments'),
+    fetchRows('requirements'),
+    fetchRows('department_personnel'),
+  ])
+  loadError.value = departmentResult.error || requirementResult.error || personnelResult.error || ''
+  departments.value = departmentResult.data.map((department) => {
+    const id = department.id
+    const requirements = requirementResult.data.filter((item) => item.department_id === id || item.department === department.name)
+    const personnel = personnelResult.data.filter((item) => item.department_id === id).length
+    return {
+      name: String(department.name || department.title || id),
+      requirement: String(requirements[0]?.title || requirements[0]?.name || '—'),
+      personnel: `${personnel} personnel`,
+      action: 'Manage',
+    }
+  })
+  isLoading.value = false
+}
+
+onMounted(loadDepartments)
 </script>
 
 <template>
@@ -22,7 +44,7 @@ const selectedDepartment = ref<(typeof departments)[number] | null>(null)
       <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 rounded-[16px] border border-[#dfe3ea] bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md">
         <div class="w-full sm:flex-1 flex items-center gap-2 rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2">
           <span class="text-slate-400 text-lg">⌕</span>
-          <input placeholder="Search" class="w-full bg-transparent text-slate-600 text-sm outline-none" />
+          <input v-model="searchQuery" placeholder="Search" class="w-full bg-transparent text-slate-600 text-sm outline-none" />
         </div>
         <button class="w-full sm:w-auto bg-[#8d63e8] text-white rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="activePopup = 'add'">
           + Add Department
@@ -41,7 +63,10 @@ const selectedDepartment = ref<(typeof departments)[number] | null>(null)
           <div class="text-right">Action</div>
         </div>
 
-        <div v-for="dept in departments" :key="dept.name" class="grid grid-cols-[1.1fr_1.4fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+        <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading departments...</div>
+        <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
+        <div v-else-if="departments.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No departments found.</div>
+        <div v-for="dept in departments.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))" v-else :key="dept.name" class="grid grid-cols-[1.1fr_1.4fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ dept.name }}</div>
           <div>{{ dept.requirement }}</div>
           <div>{{ dept.personnel }}</div>

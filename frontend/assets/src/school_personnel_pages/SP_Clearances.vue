@@ -1,17 +1,41 @@
 <script setup lang="ts">
-const stats = [
-  { value: 245, label: 'Total Students', icon: '▣', tone: 'purple' },
-  { value: 128, label: 'In Progress', icon: '◔', tone: 'orange' },
-  { value: 87, label: 'Completed', icon: '✓', tone: 'green' },
-  { value: 30, label: 'For Action', icon: '!', tone: 'red' },
-]
+import { onMounted, ref } from 'vue'
+import { fetchRows, relativeDate } from '../lib/database'
 
-const clearances = [
-  { student: 'Xuniso Belat', requirement: 'Activities', department: 'Philosophy', submitted: 'Today', status: 'Pending' },
-  { student: 'Heart Santiago', requirement: 'Assignments, Acts', department: 'PR-1', submitted: 'Yesterday', status: 'Approved' },
-  { student: 'Anne Ongpauco', requirement: 'Finance Requirements', department: 'Finance', submitted: '4 days ago', status: 'For Action' },
-  { student: 'Ralph Josh Bacon', requirement: 'Project', department: 'Oral Com', submitted: '4 days ago', status: 'Approved' },
-]
+const stats = ref([
+  { value: 0, label: 'Total Students', icon: '▣', tone: 'purple' },
+  { value: 0, label: 'In Progress', icon: '◔', tone: 'orange' },
+  { value: 0, label: 'Completed', icon: '✓', tone: 'green' },
+  { value: 0, label: 'For Action', icon: '!', tone: 'red' },
+])
+
+const clearances = ref<Array<{ student: string; requirement: string; department: string; submitted: string; status: string }>>([])
+const isLoading = ref(true)
+const loadError = ref('')
+
+async function loadClearances() {
+  const result = await fetchRows('clearance_submissions')
+  loadError.value = result.error || ''
+  const status = (row: Record<string, any>) => String(row.status || 'Pending')
+  const rows = result.data
+  clearances.value = rows.map((row) => ({
+    student: String(row.student_name || row.full_name || row.student_id || 'Unknown student'),
+    requirement: String(row.requirement_name || row.title || row.requirement_id || 'Requirement'),
+    department: String(row.department_name || row.department || '—'),
+    submitted: relativeDate(row.submitted_at || row.created_at),
+    status: status(row),
+  }))
+  const count = (values: string[]) => rows.filter((row) => values.includes(status(row).toLowerCase())).length
+  stats.value = [
+    { value: (await fetchRows('users')).data.length, label: 'Total Students', icon: '▣', tone: 'purple' },
+    { value: count(['pending', 'in review', 'in_progress']), label: 'In Progress', icon: '◔', tone: 'orange' },
+    { value: count(['approved', 'completed', 'cleared']), label: 'Completed', icon: '✓', tone: 'green' },
+    { value: count(['rejected', 'for action']), label: 'For Action', icon: '!', tone: 'red' },
+  ]
+  isLoading.value = false
+}
+
+onMounted(loadClearances)
 
 const statusClasses: Record<string, string> = {
   Pending: 'bg-[#fdf1d1] text-[#d58c08]',
@@ -77,7 +101,10 @@ const statusClasses: Record<string, string> = {
           <div>Status</div>
         </div>
 
-        <div v-for="item in clearances" :key="item.student" class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+        <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading clearances...</div>
+        <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
+        <div v-else-if="clearances.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No clearance submissions found.</div>
+        <div v-for="item in clearances" v-else :key="`${item.student}-${item.requirement}`" class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ item.student }}</div>
           <div>{{ item.requirement }}</div>
           <div>{{ item.department }}</div>

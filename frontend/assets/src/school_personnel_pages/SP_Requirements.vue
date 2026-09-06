@@ -1,15 +1,30 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import SPAddRequirementPopup from '../popups/SPAddRequirementPopup.vue'
 import SPEditRequirementPopup from '../popups/SPEditRequirementPopup.vue'
-const requirements = [
-  { name: 'Pr 1 Clearance', department: 'Practical Research 1', requiredDocument: 'Research Paper', instruction: 'Finished Research paper', deadline: 'Sep 12, 2026' },
-  { name: 'Finance Clearance', department: 'Finance', requiredDocument: 'Finance Form', instruction: 'Submit Form', deadline: 'Sep 12, 2026' },
-  { name: 'Oral Com Clearance', department: 'Oral Communication', requiredDocument: 'Essay', instruction: '500 words essay about...', deadline: 'Sep 15, 2026' },
-  { name: 'Library Clearance', department: 'Library', requiredDocument: 'Library Form', instruction: 'Submit Form', deadline: 'Sep 15, 2026' },
-]
+import { displayDate, fetchRows } from '../lib/database'
+
+const requirements = ref<Array<{ id: string; name: string; department: string; requiredDocument: string; instruction: string; deadline: string }>>([])
+const isLoading = ref(true)
+const loadError = ref('')
 const activePopup = ref<'add' | 'edit' | null>(null)
-const selectedRequirement = ref<(typeof requirements)[number] | null>(null)
+const selectedRequirement = ref<(typeof requirements.value)[number] | null>(null)
+
+async function loadRequirements() {
+  const result = await fetchRows('requirements')
+  loadError.value = result.error || ''
+  requirements.value = result.data.map((item) => ({
+    id: String(item.id),
+    name: String(item.title || item.name || 'Requirement'),
+    department: String(item.department_name || item.department || item.department_id || '—'),
+    requiredDocument: String(item.required_document || item.document || '—'),
+    instruction: String(item.instruction || item.instructions || '—'),
+    deadline: displayDate(item.deadline),
+  }))
+  isLoading.value = false
+}
+
+onMounted(loadRequirements)
 </script>
 
 <template>
@@ -42,7 +57,10 @@ const selectedRequirement = ref<(typeof requirements)[number] | null>(null)
           <div class="text-right">Action</div>
         </div>
 
-        <div v-for="item in requirements" :key="item.name" class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+        <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading requirements...</div>
+        <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
+        <div v-else-if="requirements.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No requirements found.</div>
+        <div v-for="item in requirements" v-else :key="item.id" class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ item.name }}</div>
           <div>{{ item.department }}</div>
           <div>{{ item.requiredDocument }}</div>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AdminHeader from '../headers/AdminHeader.vue'
 import AdminReviewPopup from '../popups/AdminReviewPopup.vue'
+import { fetchRows, relativeDate } from '../lib/database'
 
 interface StatCard {
   value: number
@@ -11,6 +12,7 @@ interface StatCard {
 }
 
 interface VerificationDocument {
+  id: string
   student: string
   requirement: string
   department: string
@@ -20,34 +22,46 @@ interface VerificationDocument {
 const activePage = ref('Dashboard')
 const mobileMenuOpen = ref(false)
 const selectedDocument = ref<VerificationDocument | null>(null)
+const isLoading = ref(true)
+const loadError = ref('')
 
-const statistics: StatCard[] = [
-  { value: 245, label: 'Total Students', icon: '▣', type: 'purple' },
-  { value: 128, label: 'In Progress', icon: '⌛', type: 'orange' },
-  { value: 87, label: 'Completed', icon: '✓', type: 'green' },
-  { value: 30, label: 'For Action', icon: '!', type: 'red' }
-]
+const statistics = ref<StatCard[]>([])
 
-const documents: VerificationDocument[] = [
-  {
-    student: 'Mary Grace Piattos',
-    requirement: 'Registrar Requirements',
-    department: 'Registrar',
-    submitted: 'Today'
-  },
-  {
-    student: 'Timon Andrew Pusa',
-    requirement: 'Library Requirements',
-    department: 'Library',
-    submitted: 'Yesterday'
-  },
-  {
-    student: 'Jay Kamote',
-    requirement: 'Finance Requirements',
-    department: 'Finance',
-    submitted: '4 days ago'
-  }
-]
+const documents = ref<VerificationDocument[]>([])
+
+const counts = computed(() => {
+  const total = statistics.value.find((stat) => stat.label === 'Total Students')?.value ?? 0
+  const inProgress = statistics.value.find((stat) => stat.label === 'In Progress')?.value ?? 0
+  const completed = statistics.value.find((stat) => stat.label === 'Completed')?.value ?? 0
+  const action = statistics.value.find((stat) => stat.label === 'For Action')?.value ?? 0
+  return { total, inProgress, completed, action }
+})
+
+async function loadDashboard() {
+  const [usersResult, submissionsResult] = await Promise.all([fetchRows('users'), fetchRows('clearance_submissions')])
+  loadError.value = usersResult.error || submissionsResult.error || ''
+  const submissions = submissionsResult.data
+  const status = (row: Record<string, any>) => String(row.status || '').toLowerCase()
+  const completed = submissions.filter((row) => ['approved', 'completed', 'cleared'].includes(status(row))).length
+  const action = submissions.filter((row) => ['rejected', 'for action'].includes(status(row))).length
+  const inProgress = Math.max(submissions.length - completed - action, 0)
+  statistics.value = [
+    { value: usersResult.data.length, label: 'Total Students', icon: '▣', type: 'purple' },
+    { value: inProgress, label: 'In Progress', icon: '⌛', type: 'orange' },
+    { value: completed, label: 'Completed', icon: '✓', type: 'green' },
+    { value: action, label: 'For Action', icon: '!', type: 'red' },
+  ]
+  documents.value = submissions.slice(0, 5).map((row) => ({
+    id: String(row.id),
+    student: row.student_name || row.full_name || row.student_email || String(row.student_id || 'Unknown student'),
+    requirement: row.requirement_name || row.title || String(row.requirement_id || 'Requirement'),
+    department: row.department_name || String(row.department || '—'),
+    submitted: relativeDate(row.submitted_at || row.created_at),
+  }))
+  isLoading.value = false
+}
+
+onMounted(loadDashboard)
 
 // Tailwind's default palette doesn't cover these exact brand colors,
 // so we map each stat "type" to arbitrary-value utility classes.
@@ -71,7 +85,7 @@ const setActivePage = (page: string) => {
 }
 
 const reviewDocument = (student: string) => {
-  selectedDocument.value = documents.find((document) => document.student === student) ?? null
+  selectedDocument.value = documents.value.find((document) => document.student === student) ?? null
 }
 </script>
 
@@ -116,7 +130,7 @@ const reviewDocument = (student: string) => {
           <div class="mt-5 sm:mt-6">
             <div class="flex items-center text-sm sm:text-base">
               <span>Completed</span>
-              <strong class="ml-2 font-bold">87</strong>
+                <strong class="ml-2 font-bold">{{ counts.completed }}</strong>
             </div>
 
             <div class="flex items-center gap-3 mt-2">
@@ -130,7 +144,7 @@ const reviewDocument = (student: string) => {
           <div class="mt-5 sm:mt-6">
             <div class="flex items-center text-sm sm:text-base">
               <span>In Progress</span>
-              <strong class="ml-2 font-bold">128</strong>
+                <strong class="ml-2 font-bold">{{ counts.inProgress }}</strong>
             </div>
 
             <div class="flex items-center gap-3 mt-2">
@@ -145,7 +159,7 @@ const reviewDocument = (student: string) => {
           <div class="mt-5 sm:mt-6">
             <div class="flex items-center text-sm sm:text-base">
               <span>Needs Action</span>
-              <strong class="ml-2 font-bold">30</strong>
+                <strong class="ml-2 font-bold">{{ counts.action }}</strong>
             </div>
 
             <div class="flex items-center gap-3 mt-2">
@@ -178,9 +192,9 @@ const reviewDocument = (student: string) => {
             <div></div>
           </div>
 
-          <div
-            v-for="document in documents"
-            :key="document.student"
+          <div v-if="isLoading" class="px-4 py-6 text-center text-sm text-slate-500">Loading records...</div>
+          <div v-else-if="loadError" class="px-4 py-6 text-center text-sm text-red-600">{{ loadError }}</div>
+          <div v-for="document in documents" v-else :key="document.id"
             class="grid grid-cols-[1.1fr_1.25fr_0.85fr_0.7fr_80px] gap-2 items-center min-h-[60px] sm:min-h-[72px] px-3 sm:px-4 border-b border-[#cccccc] last:border-b-0 text-xs sm:text-sm text-[#444444] overflow-x-auto"
           >
             <div>{{ document.student }}</div>

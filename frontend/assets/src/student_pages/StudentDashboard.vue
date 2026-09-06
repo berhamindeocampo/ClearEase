@@ -3,9 +3,10 @@ import { computed, onMounted, ref } from 'vue'
 import { Bell, Check, Clock3, X } from 'lucide-vue-next'
 import StudentNotifPopup from '../popups/StudentNotifPopup.vue'
 import StudentViewAllPopup from '../popups/StudentViewAllPopup.vue'
+import { displayDate, fetchRows } from '../lib/database'
 
 interface Activity {
-  id: number
+  id: string | number
   title: string
   department: string
   status: 'Approved' | 'Pending' | 'Rejected'
@@ -14,15 +15,16 @@ interface Activity {
 }
 
 const studentName = ref('Student')
-const notificationCount = ref(2)
-const clearanceProgress = ref(50)
-const requirementsTotal = ref(8)
-const requirementsCompleted = ref(4)
-const requirementsPending = ref(3)
-const requirementsRejected = ref(1)
-const daysRemaining = ref(45)
-const lastUpdated = ref('Aug 29, 2026')
+const notificationCount = ref(0)
+const clearanceProgress = ref(0)
+const requirementsTotal = ref(0)
+const requirementsCompleted = ref(0)
+const requirementsPending = ref(0)
+const requirementsRejected = ref(0)
+const daysRemaining = ref(0)
+const lastUpdated = ref('—')
 const activePopup = ref<'notifications' | 'activity' | null>(null)
+const activityError = ref('')
 
 onMounted(() => {
   const session = localStorage.getItem('clearease-local-session')
@@ -52,40 +54,59 @@ onMounted(() => {
   }
 })
 
-const recentActivities = ref<Activity[]>([
-  {
-    id: 1,
-    title: 'Library Clearance Approved',
-    department: 'Library',
-    status: 'Approved',
-    type: 'approved',
-    date: 'Aug 28, 2026',
-  },
-  {
-    id: 2,
-    title: 'Finance Review Required',
-    department: 'Finance',
-    status: 'Pending',
-    type: 'pending',
-    date: 'Aug 27, 2026',
-  },
-  {
-    id: 3,
-    title: 'Guidance Approval Completed',
-    department: 'Guidance',
-    status: 'Approved',
-    type: 'approved',
-    date: 'Aug 26, 2026',
-  },
-  {
-    id: 4,
-    title: 'Registrar - Documentation Missing',
-    department: 'Registrar',
-    status: 'Rejected',
-    type: 'rejected',
-    date: 'Aug 25, 2026',
-  },
-])
+const recentActivities = ref<Activity[]>([])
+
+async function loadActivities() {
+  const submissionsResult = await fetchRows('clearance_submissions')
+  const session = JSON.parse(localStorage.getItem('clearease-local-session') || 'null') as { studentId?: string } | null
+  const submissions = submissionsResult.data.filter((row) => !session?.studentId || String(row.student_id) === session.studentId)
+  const statuses = submissions.map((row) => String(row.status || 'pending').toLowerCase())
+  requirementsTotal.value = submissions.length
+  requirementsCompleted.value = statuses.filter((status) => ['approved', 'completed', 'cleared'].includes(status)).length
+  requirementsRejected.value = statuses.filter((status) => ['rejected', 'for action'].includes(status)).length
+  requirementsPending.value = Math.max(requirementsTotal.value - requirementsCompleted.value - requirementsRejected.value, 0)
+  clearanceProgress.value = requirementsTotal.value ? Math.round((requirementsCompleted.value / requirementsTotal.value) * 100) : 0
+  notificationCount.value = requirementsPending.value + requirementsRejected.value
+  lastUpdated.value = displayDate(submissions[0]?.updated_at || submissions[0]?.created_at)
+  const deadline = submissions
+    .map((row) => row.deadline)
+    .filter(Boolean)
+    .map((value) => new Date(String(value)).getTime())
+    .filter((value) => !Number.isNaN(value))
+    .sort((a, b) => a - b)[0]
+  daysRemaining.value = deadline ? Math.max(0, Math.ceil((deadline - Date.now()) / 86400000)) : 0
+
+  const result = await fetchRows('activity_logs')
+  if (result.error) {
+    activityError.value = submissionsResult.error || result.error
+    recentActivities.value = submissions.slice(0, 5).map((row, index) => {
+      const status = String(row.status || 'Pending')
+      return {
+        id: row.id || index,
+        title: String(row.title || row.requirement_name || 'Clearance update'),
+        department: String(row.department_name || row.department || '—'),
+        status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
+        type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
+        date: displayDate(row.updated_at || row.created_at),
+      }
+    })
+    return
+  }
+
+  recentActivities.value = result.data.slice(0, 5).map((row, index) => {
+    const status = String(row.status || 'Pending')
+    return {
+      id: row.id || index,
+      title: String(row.title || row.description || 'Activity update'),
+      department: String(row.department_name || row.department || '—'),
+      status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
+      type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
+      date: displayDate(row.created_at),
+    }
+  })
+}
+
+onMounted(loadActivities)
 
 const userInitials = computed(() => {
   const names = studentName.value.split(' ')
