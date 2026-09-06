@@ -7,6 +7,8 @@ const LOCAL_SESSION_KEY = 'clearease-local-session'
 const LEGACY_USER_NAME_KEY = 'clearease-user-name'
 const LEGACY_USER_EMAIL_KEY = 'clearease-user-email'
 
+export type UserRole = 'student' | 'admin' | 'school_personnel'
+
 const getLocalSession = () => {
   if (typeof window === 'undefined') return null
 
@@ -17,31 +19,35 @@ const getLocalSession = () => {
   }
 }
 
-const saveLocalSession = (user: { email: string; fullName: string; studentId: string; role?: string }) => {
+const saveLocalSession = (user: { email: string; fullName: string; studentId: string; role?: UserRole }) => {
   if (typeof window === 'undefined') return
   localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(user))
   localStorage.setItem(LEGACY_USER_NAME_KEY, user.fullName)
   localStorage.setItem(LEGACY_USER_EMAIL_KEY, user.email)
 }
 
-const resolveUserRole = async (email: string): Promise<'student' | 'admin'> => {
+const resolveUserRole = async (email: string): Promise<UserRole> => {
   if (!supabase) {
     const session = getLocalSession()
-    return session?.role === 'admin' ? 'admin' : 'student'
+    return session?.role === 'admin' ? 'admin' : session?.role === 'school_personnel' ? 'school_personnel' : 'student'
   }
 
   const { data, error } = await supabase
-    .from('admin')
-    .select('email')
-    .eq('email', email)
+    .from('clearease_personnel')
+    .select('role')
+    .eq('role', email)
     .maybeSingle()
 
-  if (!error && data) {
+  if (!error && data?.role === 'admin') {
     return 'admin'
   }
 
   if (error && !['42P01', '42703'].includes(error.code || '')) {
-    console.warn('Admin table check failed:', error.message)
+    console.warn('Personnel role check failed:', error.message)
+  }
+
+  if (!error && data?.role === 'schoolpersonnel') {
+    return 'school_personnel'
   }
 
   return 'student'
@@ -116,12 +122,16 @@ export const useAuth = () => {
     return { user: { id: inserted?.[0]?.id ?? 'supabase-user', email: data.email, role } }
   }
 
-  const logIn = async (email: string, password: string) => {
+  const logIn = async (email: string, password: string, requestedRole: UserRole = 'student') => {
     if (!supabase) {
       const session = getLocalSession()
 
       if (session && session.email.toLowerCase() === email.toLowerCase()) {
-        const role = session.role === 'admin' ? 'admin' : 'student'
+        const role: UserRole = session.role === 'admin'
+          ? 'admin'
+          : session.role === 'school_personnel'
+            ? 'school_personnel'
+            : 'student'
         saveLocalSession({
           email: session.email,
           fullName: session.fullName,
@@ -139,6 +149,39 @@ export const useAuth = () => {
       }
 
       throw new Error('Invalid login credentials')
+    }
+
+    const normalizedIdentifier = email.toLowerCase().replace(/[^a-z]/g, '')
+    const inferredRole = normalizedIdentifier.includes('schoolpersonnel')
+      ? 'school_personnel'
+      : normalizedIdentifier.includes('admin')
+        ? 'admin'
+        : requestedRole
+    const roleTable = inferredRole === 'admin' || inferredRole === 'school_personnel' ? 'clearease_personnel' : null
+    if (roleTable && !email.includes('@')) {
+      const { data: roleData, error: roleError } = await supabase
+        .from(roleTable)
+        .select('*')
+        .eq('role', inferredRole === 'school_personnel' ? 'schoolpersonnel' : 'admin')
+        .eq('password', password)
+        .maybeSingle()
+
+      if (roleError && !['42P01', '42703'].includes(roleError.code || '')) {
+        throw roleError
+      }
+
+      if (roleData) {
+        const roleEmail = roleData.email || `${email}@clearease.local`
+        const roleName = roleData.full_name || roleData.fullName || roleData.name || roleData.username || roleData.user_name || email
+        saveLocalSession({
+          email: roleEmail,
+          fullName: roleName,
+          studentId: roleData.student_id || roleData.id || inferredRole.toUpperCase(),
+          role: inferredRole,
+        })
+
+        return { user: { id: roleData.id, email: roleEmail, role: inferredRole } }
+      }
     }
 
     const { data, error } = await supabase
@@ -171,33 +214,35 @@ export const useAuth = () => {
       }
     }
 
-    const { data: adminData, error: adminError } = await supabase
-      .from('admin')
+    const { data: personnelData, error: personnelError } = await supabase
+      .from('clearease_personnel')
       .select('*')
-      .eq('email', email)
+      .eq('role', 'schoolpersonnel')
       .eq('password', password)
       .maybeSingle()
 
-    if (adminError) {
-      throw adminError
+    if (personnelError && !['42P01', '42703'].includes(personnelError.code || '')) {
+      throw personnelError
     }
 
-    if (!adminData) {
+    if (!personnelData) {
       throw new Error('Invalid login credentials')
     }
 
+    const personnelEmail = personnelData.email || 'schoolpersonnel@clearease.local'
+    const personnelName = personnelData.full_name || personnelData.fullName || personnelData.name || personnelData.username || personnelData.user_name || personnelEmail
     saveLocalSession({
-      email: adminData.email,
-      fullName: adminData.full_name || adminData.fullName || 'Admin',
-      studentId: adminData.student_id || 'ADMIN',
-      role: 'admin',
+      email: personnelEmail,
+      fullName: personnelName,
+      studentId: personnelData.student_id || personnelData.id || 'PERSONNEL',
+      role: 'school_personnel',
     })
 
     return {
       user: {
-        id: adminData.id,
-        email: adminData.email,
-        role: 'admin',
+        id: personnelData.id,
+        email: personnelEmail,
+        role: 'school_personnel',
       },
     }
   }

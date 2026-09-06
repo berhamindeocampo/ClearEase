@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { Bell, Check, Clock3, X } from 'lucide-vue-next'
+import StudentNotifPopup from '../popups/StudentNotifPopup.vue'
+import StudentViewAllPopup from '../popups/StudentViewAllPopup.vue'
 
 interface Activity {
   id: number
@@ -20,6 +22,7 @@ const requirementsPending = ref(3)
 const requirementsRejected = ref(1)
 const daysRemaining = ref(45)
 const lastUpdated = ref('Aug 29, 2026')
+const activePopup = ref<'notifications' | 'activity' | null>(null)
 
 onMounted(() => {
   const session = localStorage.getItem('clearease-local-session')
@@ -90,7 +93,7 @@ const userInitials = computed(() => {
 })
 
 const toggleNotifications = () => {
-  console.log('Toggle Notifications')
+  activePopup.value = 'notifications'
 }
 
 const toggleProfile = () => {
@@ -98,7 +101,7 @@ const toggleProfile = () => {
 }
 
 const viewAllActivity = () => {
-  console.log('View all activity')
+  activePopup.value = 'activity'
 }
 
 const getActivityIconClasses = (type: string): string => {
@@ -225,5 +228,8 @@ button {
         </div>
       </div>
     </div>
+
+    <StudentNotifPopup v-if="activePopup === 'notifications'" :activities="recentActivities" @close="activePopup = null" />
+    <StudentViewAllPopup v-if="activePopup === 'activity'" :activities="recentActivities" @close="activePopup = null" />
   </section>
 </template>

@@ -19,19 +19,19 @@ const goToSignIn = () => {
     <header class="sticky top-0 z-50 bg-white shadow-[0_4px_12px_rgba(0,0,0,0.06)] border-b border-[#dfe3ea]">
       <nav class="max-w-[1500px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
         <div class="flex items-center gap-3 shrink-0">
-          <img :src="cleareaseLogo" alt="ClearEase Logo" class="h-20 w-auto sm:h-24 md:h-28 object-contain" />
+          <img :src="cleareaseLogo" alt="ClearEase Logo" class="h-12 w-auto sm:h-14 md:h-16 object-contain drop-shadow-sm" />
         </div>
 
         <div class="flex items-center gap-4 ml-auto">
           <button
             @click="goToLogin"
-            class="px-7 py-3 rounded-full bg-[#8d63e8] text-white text-lg font-semibold shadow-[0_4px_12px_rgba(141,99,232,0.35)] hover:bg-[#7f55dd] transition"
+            class="px-5 py-2.5 rounded-[18px] bg-[#8d63e8] text-white text-base md:text-[1.05rem] font-semibold shadow-[0_4px_12px_rgba(141,99,232,0.35)] hover:bg-[#7f55dd] transition"
           >
             Log In
           </button>
           <button
             @click="goToSignIn"
-            class="px-7 py-3 rounded-full bg-[#8d63e8] text-white text-lg font-semibold shadow-[0_4px_12px_rgba(141,99,232,0.35)] hover:bg-[#7f55dd] transition"
+            class="px-5 py-2.5 rounded-[18px] bg-[#8d63e8] text-white text-base md:text-[1.05rem] font-semibold shadow-[0_4px_12px_rgba(141,99,232,0.35)] hover:bg-[#7f55dd] transition"
           >
             Sign In
           </button>

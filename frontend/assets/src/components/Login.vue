@@ -34,7 +34,7 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!formData.value.email) {
-    errors.value.email = 'Email is required'
+    errors.value.email = 'Username or email is required'
   }
 
   if (!formData.value.password) {
@@ -61,6 +61,11 @@ const handleLogIn = async (): Promise<void> => {
       return
     }
 
+    if (role === 'school_personnel') {
+      router.push('/sp/requirements')
+      return
+    }
+
     router.push('/dashboard')
   } catch (error: any) {
     errors.value.submit = error?.message || 'Failed to log in. Please check your credentials.'
@@ -71,41 +76,42 @@ const handleLogIn = async (): Promise<void> => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-8">
-    <div class="w-full max-w-[980px]">
-      <div class="mb-6 flex justify-center">
+  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-5">
+    <div class="w-full max-w-[440px]">
+      <div class="mb-3 flex justify-center">
           <img
             :src="universityLogo"
             alt="St. Paul University"
-            class="h-16 w-auto object-contain md:h-20"
+            class="h-11 w-auto object-contain md:h-14"
           />
       </div>
 
-      <div class="mx-auto w-full max-w-[520px] rounded-[28px] bg-white/90 p-6 shadow-[0_18px_40px_rgba(56,34,75,0.12)] md:p-8">
-        <div class="mb-6 flex justify-center">
+      <div class="mx-auto w-full rounded-[26px] bg-white/95 p-5 shadow-[0_18px_40px_rgba(56,34,75,0.12)] sm:p-7">
+        <div class="mb-3 flex justify-center">
           <img
               :src="cleareaseLogo"
               alt="ClearEase Logo"
-              class="h-20 w-auto object-contain md:h-24"
+              class="h-14 w-auto object-contain md:h-16"
             />
         </div>
 
-        <h1 class="text-center text-4xl font-bold text-gray-900">Welcome!</h1>
-        <p class="mt-3 text-center text-lg text-gray-700">
+        <h1 class="text-center text-2xl font-bold text-gray-900">Welcome!</h1>
+        <p class="mt-1 text-center text-sm text-gray-700">
           Log in to access your ClearEase account.
         </p>
 
-        <form @submit.prevent="handleLogIn" class="mt-8 space-y-6">
+        <form @submit.prevent="handleLogIn" class="mt-5 space-y-4">
           <div>
-            <label class="mb-2 block text-xl font-bold text-gray-900">
-              Username
+            <label for="login-identifier" class="mb-1 block text-sm font-bold text-gray-900">
+              Username or email
             </label>
             <input
+              id="login-identifier"
               v-model="formData.email"
-              type="email"
-              placeholder="Enter your email or username"
+              type="text"
+              placeholder="Enter username or email"
               required
-              class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:border-purple-500"
+              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-purple-500"
             />
             <span v-if="errors.email" class="mt-1 block text-xs text-red-500">
               {{ errors.email }}
@@ -113,16 +119,17 @@ const handleLogIn = async (): Promise<void> => {
           </div>
 
           <div>
-            <label class="mb-2 block text-xl font-bold text-gray-900">
+            <label for="login-password" class="mb-1 block text-sm font-bold text-gray-900">
               Password
             </label>
             <div class="relative">
               <input
+                id="login-password"
                 v-model="formData.password"
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Enter your password"
                 required
-                class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 pr-12 text-base text-gray-800 outline-none transition focus:border-purple-500"
+                class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2.5 pr-12 text-sm text-gray-800 outline-none transition focus:border-purple-500"
               />
               <button
                 type="button"
@@ -165,7 +172,7 @@ const handleLogIn = async (): Promise<void> => {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full rounded-2xl bg-[#7a4ed6] py-3 text-xl font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
+            class="w-full rounded-xl bg-[#7a4ed6] py-2.5 text-base font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
           >
             <span v-if="isLoading">Logging in...</span>
             <span v-else>Log In</span>
@@ -176,7 +183,7 @@ const handleLogIn = async (): Promise<void> => {
           {{ errors.submit }}
         </div>
 
-        <p class="mt-6 text-center text-lg text-gray-700">
+        <p class="mt-4 text-center text-sm text-gray-700">
           Don’t have an account?
           <router-link to="/signin" class="font-bold text-purple-700 hover:underline">
             Sign In

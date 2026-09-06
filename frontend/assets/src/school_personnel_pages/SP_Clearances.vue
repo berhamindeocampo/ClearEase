@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import AdminHeader from './AdminHeader.vue'
-
 const stats = [
   { value: 245, label: 'Total Students', icon: '▣', tone: 'purple' },
   { value: 128, label: 'In Progress', icon: '◔', tone: 'orange' },
@@ -24,15 +22,13 @@ const statusClasses: Record<string, string> = {
 
 <template>
   <div class="min-h-screen bg-[#f0efff] text-slate-900">
-    <AdminHeader />
-
-    <main class="max-w-[1500px] mx-auto px-6 py-8">
-      <div class="grid grid-cols-4 gap-6 mb-8">
-        <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-[28px] border border-[#e5e7eb] shadow-[0_8px_20px_rgba(15,23,42,0.06)] p-5 min-h-[170px]">
-          <div class="flex items-center gap-4">
+    <main class="max-w-[1200px] mx-auto px-4 py-6 sm:px-6 sm:py-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 sm:mb-8">
+        <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-[20px] border border-[#e5e7eb] shadow-md p-4 sm:p-5 min-h-[130px] sm:min-h-[140px]">
+          <div class="flex items-center gap-3">
             <div
               :class="[
-                'flex h-14 w-14 items-center justify-center rounded-2xl text-3xl font-semibold',
+                'flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-xl text-2xl sm:text-3xl font-semibold',
                 stat.tone === 'purple' ? 'bg-[#f0e7ff] text-[#8d63e8]' :
                 stat.tone === 'orange' ? 'bg-[#fff0dc] text-[#f59e0b]' :
                 stat.tone === 'green' ? 'bg-[#def9ea] text-[#1ea86a]' : 'bg-[#ffdfe2] text-[#e74f57]'
@@ -40,12 +36,12 @@ const statusClasses: Record<string, string> = {
             >
               {{ stat.icon }}
             </div>
-            <div class="text-[3rem] font-bold leading-none">{{ stat.value }}</div>
+            <div class="text-2xl sm:text-3xl font-bold leading-none">{{ stat.value }}</div>
           </div>
-          <div class="mt-4 text-[1.1rem] font-medium text-slate-700">{{ stat.label }}</div>
+          <div class="mt-3 sm:mt-4 text-sm font-medium text-slate-700">{{ stat.label }}</div>
           <div
             :class="[
-              'mt-4 h-1.5 rounded-full',
+              'mt-3 h-1 rounded-full',
               stat.tone === 'purple' ? 'bg-[#8d63e8]' :
               stat.tone === 'orange' ? 'bg-[#f59e0b]' :
               stat.tone === 'green' ? 'bg-[#1ea86a]' : 'bg-[#e74f57]'
@@ -55,25 +51,25 @@ const statusClasses: Record<string, string> = {
         </div>
       </div>
 
-      <div class="mb-8 flex items-center gap-4 rounded-[22px] border border-[#dfe3ea] bg-white px-5 py-4 shadow-[0_8px_20px_rgba(15,23,42,0.04)]">
-        <div class="flex-1 flex items-center gap-3 rounded-xl border border-[#dfe3ea] bg-slate-50 px-4 py-3">
-          <span class="text-slate-400 text-xl">⌕</span>
-          <input value="Search" class="w-full bg-transparent text-slate-600 outline-none" />
+      <div class="mb-6 sm:mb-8 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 rounded-[16px] border border-[#dfe3ea] bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md">
+        <div class="w-full sm:flex-1 flex items-center gap-2 rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2">
+          <span class="text-slate-400 text-lg">⌕</span>
+          <input placeholder="Search" class="w-full bg-transparent text-slate-600 text-sm outline-none" />
         </div>
-        <select class="rounded-xl border border-[#dfe3ea] bg-slate-50 px-4 py-3 text-slate-600">
+        <select class="w-full sm:w-auto rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2 text-slate-600 text-sm">
           <option>Status: All</option>
         </select>
-        <select class="rounded-xl border border-[#dfe3ea] bg-slate-50 px-4 py-3 text-slate-600">
+        <select class="w-full sm:w-auto rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2 text-slate-600 text-sm">
           <option>Department: All</option>
         </select>
       </div>
 
-      <div class="bg-white rounded-[28px] border border-[#dfe3ea] shadow-[0_8px_20px_rgba(15,23,42,0.06)] overflow-hidden">
-        <div class="px-6 pt-6 pb-4">
-          <h2 class="text-[2.2rem] font-black text-slate-900">Clearances Table</h2>
+      <div class="bg-white rounded-[20px] border border-[#dfe3ea] shadow-md overflow-x-auto">
+        <div class="px-4 sm:px-5 pt-4 sm:pt-5 pb-3">
+          <h2 class="text-lg sm:text-xl font-black text-slate-900">Clearances Table</h2>
         </div>
 
-        <div class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr] gap-4 px-6 py-4 border-b border-[#edf0f4] bg-[#f3f4f6] text-base font-semibold text-slate-600">
+        <div class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <div>Students</div>
           <div>Requirements</div>
           <div>Department</div>
@@ -81,7 +77,7 @@ const statusClasses: Record<string, string> = {
           <div>Status</div>
         </div>
 
-        <div v-for="item in clearances" :key="item.student" class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr] gap-4 px-6 py-5 border-b border-[#edf0f4] last:border-b-0 items-center text-[1.02rem] text-slate-700">
+        <div v-for="item in clearances" :key="item.student" class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ item.student }}</div>
           <div>{{ item.requirement }}</div>
           <div>{{ item.department }}</div>

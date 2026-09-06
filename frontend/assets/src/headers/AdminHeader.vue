@@ -15,10 +15,10 @@ const route = useRoute()
 const isMobileMenuOpen = ref(false)
 
 const navItems: NavItem[] = [
-  { id: 1, label: 'Dashboard', path: '/dashboard' },
-  { id: 2, label: 'Clearance', path: '/clearance' },
-  { id: 3, label: 'Requirements', path: '/requirements' },
-  { id: 4, label: 'Profile', path: '/profile' }
+  { id: 1, label: 'Dashboard', path: '/admindashboard' },
+  { id: 2, label: 'Accounts', path: '/admin/accounts' },
+  { id: 3, label: 'Department', path: '/admin/department' },
+  { id: 4, label: 'Settings', path: '/admin/settings' }
 ]
 
 const isActive = (path: string): boolean => {
@@ -41,15 +41,15 @@ a {
     <div class="max-w-[1500px] mx-auto px-4 md:px-6 py-3">
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 md:gap-5 min-w-0 flex-1">
-          <router-link to="/" class="flex items-center shrink-0 group">
+          <router-link to="/admindashboard" class="flex items-center shrink-0 group">
             <img
               :src="cleareaseLogo"
               alt="ClearEase Logo"
-              class="h-14 w-auto sm:h-16 md:h-20 object-contain drop-shadow-sm"
+              class="h-12 w-auto sm:h-14 md:h-16 object-contain drop-shadow-sm"
             />
           </router-link>
 
-          <nav class="hidden md:flex items-center justify-center gap-3 flex-1">
+          <nav class="hidden md:flex items-center justify-start gap-3 flex-1 ml-3">
             <router-link
               v-for="item in navItems"
               :key="item.id"

@@ -1,0 +1,41 @@
+<script setup lang="ts">
+import { reactive } from 'vue'
+
+interface Requirement {
+  name: string
+  department: string
+  requiredDocument: string
+  instruction: string
+  deadline: string
+}
+
+const props = defineProps<{ requirement?: Requirement }>()
+const form = reactive({
+  name: props.requirement?.name ?? '',
+  department: props.requirement?.department ?? '',
+  requiredDocument: props.requirement?.requiredDocument ?? '',
+  instruction: props.requirement?.instruction ?? '',
+  deadline: props.requirement?.deadline ?? '',
+})
+const emit = defineEmits<{ (event: 'close'): void; (event: 'save', value: typeof form): void }>()
+
+function save() {
+  if (form.name.trim()) emit('save', { ...form })
+}
+</script>
+
+<template>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="emit('close')">
+    <form class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl" @submit.prevent="save">
+      <div class="flex items-center justify-between"><h2 class="text-xl font-bold text-slate-900">Edit Requirement</h2><button type="button" class="text-2xl text-slate-400" aria-label="Close" @click="emit('close')">&times;</button></div>
+      <div class="mt-5 grid gap-3 sm:grid-cols-2">
+        <input v-model="form.name" required placeholder="Requirement" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <input v-model="form.department" placeholder="Department" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <input v-model="form.requiredDocument" placeholder="Required document" class="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2" />
+        <textarea v-model="form.instruction" placeholder="Instruction" class="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2" />
+        <input v-model="form.deadline" type="date" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+      </div>
+      <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-lg border px-4 py-2 text-sm" @click="emit('close')">Cancel</button><button class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white">Save Changes</button></div>
+    </form>
+  </div>
+</template>

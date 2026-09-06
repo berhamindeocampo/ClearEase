@@ -148,7 +148,7 @@ const handleLogOut = async () => {
       <div class="bg-white rounded-lg shadow p-6 mb-6 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
         <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
           <!-- Avatar -->
-          <div class="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
+          <div class="w-20 h-20 rounded-full bg-[#8d63e8] flex items-center justify-center text-white text-2xl font-bold flex-shrink-0">
             {{ student.initials }}
           </div>
           <!-- Name & ID -->
@@ -212,7 +212,7 @@ const handleLogOut = async () => {
               </div>
               <button 
                 @click="togglePasswordForm" 
-                class="mt-4 sm:mt-0 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="mt-4 sm:mt-0 px-4 py-2 bg-[#8d63e8] text-white text-sm font-medium rounded-md hover:bg-[#7f55dd] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8d63e8]"
               >
                 {{ showPasswordForm ? 'Cancel Change' : 'Change Password' }}
               </button>
@@ -233,7 +233,7 @@ const handleLogOut = async () => {
                   v-model="passwordForm.currentPassword"
                   type="password" 
                   id="currentPassword" 
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8d63e8] focus:border-[#8d63e8] sm:text-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -246,7 +246,7 @@ const handleLogOut = async () => {
                   v-model="passwordForm.newPassword"
                   type="password" 
                   id="newPassword" 
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8d63e8] focus:border-[#8d63e8] sm:text-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -259,7 +259,7 @@ const handleLogOut = async () => {
                   v-model="passwordForm.confirmPassword"
                   type="password" 
                   id="confirmPassword" 
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-[#8d63e8] focus:border-[#8d63e8] sm:text-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -281,7 +281,7 @@ const handleLogOut = async () => {
                 </button>
                 <button 
                   type="submit"
-                  class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="px-4 py-2 bg-[#8d63e8] text-white text-sm font-medium rounded-md hover:bg-[#7f55dd] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8d63e8]"
                 >
                   Update Password
                 </button>
