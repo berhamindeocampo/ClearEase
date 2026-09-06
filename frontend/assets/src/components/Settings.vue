@@ -1,15 +1,50 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/auth'
 
 type ThemeMode = 'light' | 'dark'
+
+const THEME_MODE_KEY = 'clearease-theme-mode'
+const AUTO_MATCH_KEY = 'clearease-auto-match-system'
 
 const themeMode = ref<ThemeMode>('light')
 const autoMatchSystem = ref(false)
 const router = useRouter()
 const { logOut } = useAuth()
 const isLoggingOut = ref(false)
+let systemThemeQuery: MediaQueryList | null = null
+
+function getSystemTheme(): ThemeMode {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
+
+function applyTheme() {
+  const effectiveTheme = autoMatchSystem.value ? getSystemTheme() : themeMode.value
+  document.documentElement.dataset.theme = effectiveTheme
+}
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem(THEME_MODE_KEY)
+  const savedAutoMatch = localStorage.getItem(AUTO_MATCH_KEY)
+
+  if (savedTheme === 'light' || savedTheme === 'dark') themeMode.value = savedTheme
+  if (savedAutoMatch !== null) autoMatchSystem.value = savedAutoMatch === 'true'
+  applyTheme()
+
+  systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
+  systemThemeQuery.addEventListener('change', applyTheme)
+})
+
+watch(themeMode, (mode) => {
+  localStorage.setItem(THEME_MODE_KEY, mode)
+  if (!autoMatchSystem.value) applyTheme()
+})
+
+watch(autoMatchSystem, (enabled) => {
+  localStorage.setItem(AUTO_MATCH_KEY, String(enabled))
+  applyTheme()
+})
 
 type UserRole = 'student' | 'admin' | 'school_personnel'
 

@@ -1,1 +1,54 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+:root {
+	color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+	color-scheme: dark;
+}
+
+:root[data-theme='dark'] body,
+:root[data-theme='dark'] #app,
+:root[data-theme='dark'] main {
+	background-color: #111827;
+	color: #e5e7eb;
+}
+
+:root[data-theme='dark'] header,
+:root[data-theme='dark'] footer,
+:root[data-theme='dark'] .bg-white {
+	background-color: #1f2937 !important;
+	color: #e5e7eb;
+}
+
+:root[data-theme='dark'] .bg-gray-100,
+:root[data-theme='dark'] .bg-gray-50 {
+	background-color: #111827 !important;
+}
+
+:root[data-theme='dark'] .border-gray-200,
+:root[data-theme='dark'] .border-gray-300 {
+	border-color: #475569 !important;
+}
+
+:root[data-theme='dark'] .text-slate-900,
+:root[data-theme='dark'] .text-gray-900,
+:root[data-theme='dark'] .text-gray-800 {
+	color: #f9fafb !important;
+}
+
+:root[data-theme='dark'] .text-slate-700,
+:root[data-theme='dark'] .text-gray-700,
+:root[data-theme='dark'] .text-gray-600,
+:root[data-theme='dark'] .text-gray-500 {
+	color: #cbd5e1 !important;
+}
+
+:root[data-theme='dark'] input,
+:root[data-theme='dark'] textarea,
+:root[data-theme='dark'] select {
+	background-color: #111827;
+	color: #f9fafb;
+	border-color: #475569;
+}

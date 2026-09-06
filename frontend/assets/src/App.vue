@@ -1,7 +1,7 @@
 <template>
-  <div id="app" class="min-h-screen bg-slate-50">
+  <div id="app" class="flex min-h-screen flex-col bg-slate-50">
     <component :is="currentHeader" v-if="showHeader" />
-    <main>
+    <main class="min-w-0 flex-1">
       <router-view />
     </main>
     <Footer v-if="showFooter" />
