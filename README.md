@@ -53,7 +53,6 @@ ClearEase provides a simple and organized way for students and school personnel 
 - Speeds up the approval process for personnel
 
 ## Project Structure
-
 ```
 ClearEase/
 ├── backend/
@@ -129,7 +128,6 @@ ClearEase/
 ├── package-lock.json
 └── package.json
 ```
-
 - **`frontend/assets`** — The Vue 3 + TypeScript + Tailwind app powered by Vite.
 - **`src/components`** — Reusable Vue components for the dashboard, sidebar, and login form.
 - **`src/lib/supabase.ts`** — Shared Supabase client configured through environment variables.
