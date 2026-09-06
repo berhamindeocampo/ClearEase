@@ -53,54 +53,81 @@ ClearEase provides a simple and organized way for students and school personnel 
 - Speeds up the approval process for personnel
 
 ## Project Structure
-
 ```
 ClearEase/
+├── backend/
+│   └── supabase/
+│       ├── .temp/
+│       │   └── cli-latest
+│       └── config.toml
 ├── frontend/
-│   └── assets/
-│       ├── public/
-│       ├── src/
-│       │   ├── assets/
-│       │   ├── components/
-│       │   │   ├── AdminAccounts.vue
-│       │   │   ├── AdminClearances.vue
-│       │   │   ├── AdminDashboard.vue
-|       |   |   ├── AdminDepartment.vue
-│       │   │   ├── AdminHeader.vue
-│       │   │   ├── AdminRequirements.vue
-|       |   |   ├── Header.vue
-│       │   │   ├── LandingPage.vue
-│       │   │   ├── Login.vue
-|       |   |   ├── Profiles.vue
-│       │   │   ├── Requirements.vue
-│       │   │   ├── SignIn.vue
-|       |   |   ├── StudentClearance.vue - In progress
-│       │   │   ├── StudentDashboard.vue
-|       |   ├── composables/
-|       |   |    └── auth.ts
-│       │   ├── lib/
-│       │   │   └── supabase.ts
-|       |   ├── router/
-|       |   |    └── index.ts
-│       │   ├── types/
-│       │   ├── App.vue
-│       │   ├── main.ts
-│       │   └── style.css
-│       ├── .env
-│       ├── .gitignore
-│       ├── index.html
-│       ├── package.json
-│       ├── package-lock.json
-│       ├── README.md
-│       ├── tsconfig.json
-│       ├── tsconfig.app.json
-│       ├── tsconfig.node.json
-│       └── vite.config.ts
-├── package.json
-├── tailwind.config.js
-└── README.md
+│   ├── assets/
+│   │   ├── .vscode/
+│   │   ├── public/
+│   │   │   └── favicon.svg
+│   │   ├── src/
+│   │   │   ├── admin_pages/
+│   │   │   │   ├── AdminAccounts.vue
+│   │   │   │   ├── AdminDashboard.vue
+│   │   │   │   └── AdminDepartment.vue
+│   │   │   ├── assets/
+│   │   │   │   ├── clearease.png
+│   │   │   │   └── stpaul.png
+│   │   │   ├── components/
+│   │   │   │   ├── Footer.vue
+│   │   │   │   ├── LandingPage.vue
+│   │   │   │   ├── Login.vue
+│   │   │   │   ├── Settings.vue
+│   │   │   │   └── SignIn.vue
+│   │   │   ├── composables/
+│   │   │   │   └── auth.ts
+│   │   │   ├── headers/
+│   │   │   │   ├── AdminHeader.vue
+│   │   │   │   ├── Header.vue
+│   │   │   │   └── SPHeader.vue
+│   │   │   ├── lib/
+│   │   │   │   └── supabase.ts
+│   │   │   ├── popups/
+│   │   │   │   ├── AdminAccountPopup.vue
+│   │   │   │   ├── AdminAddDepartmentPopup.vue
+│   │   │   │   ├── AdminManagePopup.vue
+│   │   │   │   ├── AdminReviewPopup.vue
+│   │   │   │   ├── SPAddRequirementPopup.vue
+│   │   │   │   ├── SPEditRequirementPopup.vue
+│   │   │   │   ├── StudentNotifPopup.vue
+│   │   │   │   ├── StudentSubmitPopup.vue
+│   │   │   │   ├── StudentViewAllPopup.vue
+│   │   │   │   └── StudentViewDetailsPopup.vue
+│   │   │   ├── router/
+│   │   │   │   └── index.ts
+│   │   │   ├── school_personnel_pages/
+│   │   │   │   ├── SP_Clearances.vue
+│   │   │   │   └── SP_Requirements.vue
+│   │   │   ├── student_pages/
+│   │   │   │   ├── StudentClearance.vue
+│   │   │   │   ├── StudentDashboard.vue
+│   │   │   │   ├── StudentProfiles.vue
+│   │   │   │   └── StudentRequirements.vue
+│   │   │   ├── App.vue
+│   │   │   ├── main.ts
+│   │   │   └── style.css
+│   │   ├── .gitignore
+│   │   ├── README.md
+│   │   ├── index.html
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── tsconfig.app.json
+│   │   ├── tsconfig.json
+│   │   ├── tsconfig.node.json
+│   │   └── vite.config.ts
+│   ├── package-lock.json
+│   ├── package.json
+│   └── tailwind.config.js
+├── .gitignore
+├── README.md
+├── package-lock.json
+└── package.json
 ```
-
 - **`frontend/assets`** — The Vue 3 + TypeScript + Tailwind app powered by Vite.
 - **`src/components`** — Reusable Vue components for the dashboard, sidebar, and login form.
 - **`src/lib/supabase.ts`** — Shared Supabase client configured through environment variables.
