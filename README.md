@@ -14,6 +14,7 @@ ClearEase provides a simple and organized way for students and school personnel 
 - **Icons:** Lucide Icons
 - **Backend / Database:** Supabase (Postgres, Auth, Row Level Security, Realtime, Storage)
 - **Routing:** Vue Router
+- **Version Control:** Git & GitHub
 
 ## User Roles
 
