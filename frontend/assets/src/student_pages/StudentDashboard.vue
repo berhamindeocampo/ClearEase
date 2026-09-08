@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Check, Clock3, X } from 'lucide-vue-next'
+import { CircleCheckBig, CircleX, Clock3 } from 'lucide-vue-next'
 import StudentViewAllPopup from '../popups/StudentViewAllPopup.vue'
 import { supabase, useAuth } from '../composables/auth'
 import { displayDate, fetchRows } from '../lib/database'
@@ -163,12 +163,12 @@ const getActivityIconClasses = (type: string): string => {
 
 const getActivityIcon = (type: string) => {
   const iconMap = {
-    approved: Check,
+    approved: CircleCheckBig,
     pending: Clock3,
-    rejected: X,
+    rejected: CircleX,
   }
 
-  return iconMap[type as keyof typeof iconMap] || Check
+  return iconMap[type as keyof typeof iconMap] || CircleCheckBig
 }
 
 const getStatusColor = (status: string): string => {
@@ -236,19 +236,19 @@ button {
       </div>
     </div>
 
-    <div class="mt-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+    <div class="mt-8 overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-300 px-5 py-4">
         <h3 class="text-lg font-semibold text-slate-900">Recent Activity</h3>
         <button @click="viewAllActivity" class="text-sm font-medium text-purple-600 hover:text-purple-700">
           View all
         </button>
       </div>
 
-      <div class="divide-y divide-slate-200">
-        <div v-for="activity in recentActivities" :key="activity.id" class="flex items-center justify-between px-5 py-4">
+      <div class="divide-y divide-slate-300">
+        <div v-for="activity in recentActivities" :key="activity.id" class="flex items-center justify-between px-5 py-4 transition-colors hover:bg-slate-50">
           <div class="flex items-center gap-4">
-            <div :class="['h-10 w-10 rounded-full flex items-center justify-center', getActivityIconClasses(activity.type)]">
-              <component :is="getActivityIcon(activity.type)" class="h-5 w-5" />
+            <div :class="['h-10 w-10 rounded-full border flex items-center justify-center', getActivityIconClasses(activity.type)]">
+              <component :is="getActivityIcon(activity.type)" class="h-5 w-5 stroke-[2.5]" />
             </div>
             <div>
               <p class="font-medium text-slate-900">{{ activity.title }}</p>
