@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AdminHeader from '../headers/AdminHeader.vue'
 import AdminAccountPopup from '../popups/AdminAccountPopup.vue'
 import { supabase } from '../composables/auth'
@@ -21,6 +21,13 @@ const accounts = ref<Account[]>([])
 const selectedAccount = ref<Account | null>(null)
 const isLoading = ref(false)
 const errorMessage = ref('')
+const searchQuery = ref('')
+
+const filteredAccounts = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return accounts.value
+  return accounts.value.filter((account) => [account.name, account.id, account.email, account.role].some((value) => value.toLowerCase().includes(query)))
+})
 
 const getName = (record: Record<string, unknown>) => String(record.full_name || record.fullName || record.name || record.username || record.user_name || record.email || 'Unnamed account')
 const getStatus = (record: Record<string, unknown>) => {
@@ -94,8 +101,13 @@ onMounted(fetchAccounts)
         <button :class="activeType === 'school_personnel' ? 'bg-[#8d63e8] text-white' : 'bg-white text-[#4b5563]'" class="rounded-full border border-[#d5d7df] px-3.5 py-1.5 shadow-sm" @click="selectAccountType('school_personnel')">School Personnel</button>
       </div>
 
+      <div class="mb-5 flex items-center gap-2 rounded-2xl border border-[#dfe3ea] bg-white px-4 py-3 shadow-sm">
+        <span class="text-sm text-slate-400" aria-hidden="true">⌕</span>
+        <input v-model="searchQuery" type="search" placeholder="Search by name, ID, email, or role" class="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" />
+      </div>
+
       <div class="overflow-x-auto rounded-2xl border border-[#dfe3ea] bg-white shadow-[0_6px_16px_rgba(15,23,42,0.05)]">
-        <div class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] gap-3 border-b border-[#e5e7eb] bg-[#f3f4f6] px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
+        <div class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] gap-3 border-b border-[#aeb6c4] bg-[#f3f4f6] px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
           <div>ID</div>
           <div>Name</div>
           <div>{{ activeType === 'students' ? 'Year Level' : 'Position' }}</div>
@@ -105,10 +117,10 @@ onMounted(fetchAccounts)
 
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading accounts...</div>
         <div v-else-if="errorMessage" class="px-4 py-8 text-center text-sm text-red-600">{{ errorMessage }}</div>
-        <div v-else-if="accounts.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No accounts found.</div>
-        <div v-for="account in accounts" v-else :key="account.id" class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] items-center gap-3 border-b border-[#edf0f4] px-4 py-3 last:border-b-0 text-sm">
+        <div v-else-if="filteredAccounts.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No matching accounts found.</div>
+        <div v-for="account in filteredAccounts" v-else :key="account.id" class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] items-center gap-3 border-b border-[#b8c0cc] px-4 py-3 last:border-b-0 text-sm">
           <div class="font-medium text-slate-700">{{ account.id }}</div>
-          <div class="font-medium text-slate-700">{{ account.name }}</div>
+          <div class="flex min-w-0 items-center gap-2 font-medium text-slate-700"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ account.name }}</span></div>
           <div>{{ activeType === 'students' ? account.yearLevel : account.role }}</div>
           <div>
             <span

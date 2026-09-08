@@ -120,14 +120,14 @@ const lineClasses: Record<StatCard['type'], string> = {
           <div class="border-b border-[#eeeaf8] px-5 py-4">
             <h2 class="m-0 text-lg font-bold text-[#5225bd]">Department Advisers</h2>
           </div>
-          <div class="grid grid-cols-2 gap-3 bg-[#f2f1f4] px-5 py-3 text-sm font-semibold">
+          <div class="grid grid-cols-2 gap-3 border-b border-[#aeb6c4] bg-[#f2f1f4] px-5 py-3 text-sm font-semibold">
             <div>Department</div>
             <div>Adviser</div>
           </div>
           <div v-if="isLoading" class="px-5 py-6 text-center text-sm text-slate-500">Loading departments...</div>
           <div v-else-if="!departmentRows.length" class="px-5 py-6 text-center text-sm text-slate-500">No departments found.</div>
-          <div v-else v-for="department in departmentRows" :key="department.name" class="grid grid-cols-2 gap-3 border-b border-[#eeeaf8] px-5 py-3 text-sm last:border-b-0">
-            <div>{{ department.name }}</div>
+          <div v-else v-for="department in departmentRows" :key="department.name" class="grid grid-cols-2 gap-3 border-b border-[#b8c0cc] px-5 py-3 text-sm last:border-b-0">
+            <div class="flex min-w-0 items-center gap-2"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ department.name }}</span></div>
             <div>{{ department.adviser }}</div>
           </div>
         </section>
@@ -136,14 +136,14 @@ const lineClasses: Record<StatCard['type'], string> = {
           <div class="border-b border-[#eeeaf8] px-5 py-4">
             <h2 class="m-0 text-lg font-bold text-[#5225bd]">Accounts</h2>
           </div>
-          <div class="grid grid-cols-2 gap-3 bg-[#f2f1f4] px-5 py-3 text-sm font-semibold">
+          <div class="grid grid-cols-2 gap-3 border-b border-[#aeb6c4] bg-[#f2f1f4] px-5 py-3 text-sm font-semibold">
             <div>Name</div>
             <div>Position</div>
           </div>
           <div v-if="isLoading" class="px-5 py-6 text-center text-sm text-slate-500">Loading accounts...</div>
           <div v-else-if="!accountRows.length" class="px-5 py-6 text-center text-sm text-slate-500">No accounts found.</div>
-          <div v-else v-for="account in accountRows" :key="`${account.name}-${account.role}`" class="grid grid-cols-2 gap-3 border-b border-[#eeeaf8] px-5 py-3 text-sm last:border-b-0">
-            <div>{{ account.name }}</div>
+          <div v-else v-for="account in accountRows" :key="`${account.name}-${account.role}`" class="grid grid-cols-2 gap-3 border-b border-[#b8c0cc] px-5 py-3 text-sm last:border-b-0">
+            <div class="flex min-w-0 items-center gap-2"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ account.name }}</span></div>
             <div>{{ account.role }}</div>
           </div>
         </section>
