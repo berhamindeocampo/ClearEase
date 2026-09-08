@@ -52,12 +52,12 @@ const filteredStudents = computed(() => {
 const loadClassList = async () => {
   isLoading.value = true
   const [profilesResult, requirementsResult, departmentsResult] = await Promise.all([
-    fetchRows('profiles'),
+    supabase.rpc('get_staff_department_students'),
     fetchRows('requirements'),
     fetchRows('departments'),
   ])
 
-  loadError.value = profilesResult.error || requirementsResult.error || departmentsResult.error || ''
+  loadError.value = profilesResult.error?.message || requirementsResult.error || departmentsResult.error || ''
   students.value = profilesResult.data
     .filter((row) => String(row.role || '').toLowerCase() === 'student')
     .map((row) => ({

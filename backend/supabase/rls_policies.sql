@@ -333,6 +333,23 @@ $$;
 revoke execute on function public.get_staff_clearance_submissions() from public;
 grant execute on function public.get_staff_clearance_submissions() to authenticated;
 
+create or replace function public.get_staff_department_students()
+returns setof public.profiles
+language sql
+security definer
+set search_path = public
+as $$
+  select distinct p.*
+  from public.profiles p
+  join public.department_students ds on ds.student_id = p.id
+  join public.department_personnel dp on dp.department_id = ds.department_id
+  where dp.personnel_id = auth.uid()
+    and p.role = 'student';
+$$;
+
+revoke execute on function public.get_staff_department_students() from public;
+grant execute on function public.get_staff_department_students() to authenticated;
+
 create or replace function public.review_clearance_submission(
   p_submission_id uuid,
   p_status text,
