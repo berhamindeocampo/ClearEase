@@ -42,17 +42,9 @@ async function loadClearances() {
     .filter(Boolean)
     .sort((left, right) => left.localeCompare(right))
   const profiles = new Map(profilesResult.data.map((profile) => [String(profile.id), profile]))
-  const requirements = new Map(requirementsResult.data.filter((requirement) => assignedDepartmentIds.has(String(requirement.department_id))).map((requirement) => [String(requirement.id), requirement]))
-  const departmentGrades = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.grade_level || 'Others').trim().toLowerCase()]))
-  const visibleRows = rows.filter((row) => {
-    const requirement = requirements.get(String(row.requirement_id))
-    const student = profiles.get(String(row.student_id))
-    if (!requirement || !student) return false
-
-    const departmentGrade = departmentGrades.get(String(requirement.department_id))
-    const studentGrade = String(student.grade_level || '').trim().toLowerCase()
-    return Boolean(departmentGrade && studentGrade && departmentGrade === studentGrade)
-  })
+  const requirements = new Map(requirementsResult.data.map((requirement) => [String(requirement.id), requirement]))
+  // The RPC already scopes rows to this personnel's assigned departments.
+  const visibleRows = rows
   const departmentNames = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.name || department.title || department.id)]))
   clearances.value = visibleRows.map((row) => ({
     id: String(row.id),

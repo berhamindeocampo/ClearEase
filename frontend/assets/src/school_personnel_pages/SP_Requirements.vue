@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import SPAddRequirementPopup from '../popups/SPAddRequirementPopup.vue'
 import SPEditRequirementPopup from '../popups/SPEditRequirementPopup.vue'
 import { supabase } from '../composables/auth'
@@ -11,6 +11,18 @@ const isLoading = ref(true)
 const loadError = ref('')
 const activePopup = ref<'add' | 'edit' | null>(null)
 const selectedRequirement = ref<(typeof requirements.value)[number] | null>(null)
+const searchQuery = ref('')
+const selectedDepartment = ref('all')
+
+const filteredRequirements = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  return requirements.value.filter((requirement) => {
+    const matchesSearch = !query || [requirement.name, requirement.department, requirement.requiredDocument, requirement.instruction]
+      .some((value) => value.toLowerCase().includes(query))
+    const matchesDepartment = selectedDepartment.value === 'all' || requirement.departmentId === selectedDepartment.value
+    return matchesSearch && matchesDepartment
+  })
+})
 
 type RequirementForm = {
   name: string
@@ -138,10 +150,13 @@ onMounted(loadRequirements)
       <div class="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center gap-2 sm:gap-3 rounded-[16px] border border-[#dfe3ea] bg-white px-3 sm:px-4 py-3 sm:py-4 shadow-md">
         <div class="w-full sm:flex-1 flex items-center gap-2 rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2">
           <span class="text-slate-400 text-lg">⌕</span>
-          <input placeholder="Search" class="w-full bg-transparent text-slate-600 text-sm outline-none" />
+          <input v-model="searchQuery" placeholder="Search" class="w-full bg-transparent text-slate-600 text-sm outline-none" />
         </div>
-        <select class="w-full sm:w-auto rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2 text-slate-600 text-sm">
-          <option>Department: All</option>
+        <select v-model="selectedDepartment" class="w-full sm:w-auto rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2 text-slate-600 text-sm">
+          <option value="all">Department: All</option>
+          <option v-for="department in departments" :key="department.id" :value="department.id">
+            {{ department.name }}
+          </option>
         </select>
         <button class="w-full sm:w-auto bg-[#8d63e8] text-white rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="openAddRequirement">
           + Add Requirements
@@ -164,8 +179,8 @@ onMounted(loadRequirements)
 
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading requirements...</div>
         <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
-        <div v-else-if="requirements.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No requirements found.</div>
-        <div v-for="item in requirements" v-else :key="item.id" class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+        <div v-else-if="filteredRequirements.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No requirements found.</div>
+        <div v-for="item in filteredRequirements" v-else :key="item.id" class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ item.name }}</div>
           <div>{{ item.department }}</div>
           <div>{{ item.requiredDocument }}</div>

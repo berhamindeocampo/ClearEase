@@ -60,36 +60,28 @@ const filteredStudents = computed(() => {
 
 const loadClassList = async () => {
   isLoading.value = true
-  const [profilesResult, requirementsResult, departmentsResult, assignedDepartmentsResult, membershipsResult] = await Promise.all([
+  const [profilesResult, requirementsResult, departmentsResult, assignmentsResult, profileResult, membershipsResult] = await Promise.all([
     fetchRows('profiles'),
     fetchRows('requirements'),
     fetchRows('departments'),
-    supabase!.rpc('get_my_assigned_departments'),
+    fetchRows('department_personnel'),
+    supabase!.rpc('get_my_profile'),
     supabase!.from('department_students').select('department_id, student_id'),
   ])
 
   const departmentNames = new Map(departmentsResult.data.map((row) => [String(row.id), String(row.name || row.title || '—')]))
-  let assignedDepartmentRows = (assignedDepartmentsResult.data ?? []) as Record<string, any>[]
-  let assignmentError = assignedDepartmentsResult.error?.message || ''
-  if (assignedDepartmentsResult.error) {
-    const [legacyAssignmentsResult, currentProfileResult] = await Promise.all([
-      fetchRows('department_personnel'),
-      supabase!.rpc('get_my_profile'),
-    ])
-    const profileName = String(currentProfileResult.data?.full_name || currentProfileResult.data?.email || '').trim().toLowerCase()
-    const assignedIds = new Set(legacyAssignmentsResult.data.map((row) => String(row.department_id)))
-    assignedDepartmentRows = departmentsResult.data
-      .filter((department) => assignedIds.has(String(department.id)) || String(department.adviser || '').trim().toLowerCase() === profileName)
-      .map((department) => ({
-        department_id: department.id,
-        department_name: department.name || department.title,
-        grade_level: department.grade_level,
-        section: department.section,
-        adviser: department.adviser,
-      }))
-    assignmentError = legacyAssignmentsResult.error || currentProfileResult.error?.message || ''
-  }
-  loadError.value = profilesResult.error || requirementsResult.error || departmentsResult.error || assignmentError || membershipsResult.error?.message || ''
+  const profileName = String(profileResult.data?.full_name || profileResult.data?.email || '').trim().toLowerCase()
+  const assignedIds = new Set(assignmentsResult.data.map((row) => String(row.department_id)))
+  const assignedDepartmentRows = departmentsResult.data
+    .filter((department) => assignedIds.has(String(department.id)) || String(department.adviser || '').trim().toLowerCase() === profileName)
+    .map((department) => ({
+      department_id: department.id,
+      department_name: department.name || department.title,
+      grade_level: department.grade_level,
+      section: department.section,
+      adviser: department.adviser,
+    }))
+  loadError.value = profilesResult.error || requirementsResult.error || departmentsResult.error || assignmentsResult.error || profileResult.error?.message || membershipsResult.error?.message || ''
   const assignedDepartmentIds = new Set(assignedDepartmentRows.map((row) => String(row.department_id)))
   departments.value = assignedDepartmentRows
     .map((row) => ({
@@ -105,9 +97,38 @@ const loadClassList = async () => {
     const departmentId = String(membership.department_id)
     if (assignedDepartmentIds.has(departmentId)) {
       const studentId = String(membership.student_id)
-      studentDepartmentIds.set(studentId, [...(studentDepartmentIds.get(studentId) || []), departmentId])
+      const departmentIds = studentDepartmentIds.get(studentId) || []
+      if (!departmentIds.includes(departmentId)) departmentIds.push(departmentId)
+      studentDepartmentIds.set(studentId, departmentIds)
     }
   })
+
+  const matchesAssignedClass = (profile: Record<string, any>, department: Department) => {
+    const grade = String(profile.grade_level || '').trim().toLowerCase()
+    const section = String(profile.section || '').trim().toLowerCase()
+    const grades = department.gradeLevel.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean)
+    const sections = department.section.split(',').map((value) => value.trim().toLowerCase()).filter(Boolean)
+    return grades.includes(grade) && (sections.length === 0 || sections.includes('n/a') || sections.includes(section))
+  }
+
+  profilesResult.data.forEach((profile) => {
+    if (String(profile.role || '').toLowerCase() !== 'student') return
+    const matchingDepartmentIds = departments.value
+      .filter((department) => matchesAssignedClass(profile, department))
+      .map((department) => department.id)
+    const existingDepartmentIds = studentDepartmentIds.get(String(profile.id)) || []
+    const departmentIds = Array.from(new Set([...existingDepartmentIds, ...matchingDepartmentIds]))
+    if (departmentIds.length > 0) studentDepartmentIds.set(String(profile.id), departmentIds)
+  })
+
+  // If class memberships have not been created yet, keep the assigned staff
+  // workspace useful by showing the available student profiles for their departments.
+  if (studentDepartmentIds.size === 0 && assignedDepartmentIds.size > 0) {
+    profilesResult.data
+      .filter((profile) => String(profile.role || '').toLowerCase() === 'student')
+      .forEach((profile) => studentDepartmentIds.set(String(profile.id), [...assignedDepartmentIds]))
+  }
+
   students.value = profilesResult.data
     .filter((row) => String(row.role || '').toLowerCase() === 'student' && studentDepartmentIds.has(String(row.id)))
     .map((row) => ({

@@ -55,6 +55,7 @@ async function loadRequirements() {
     const studentClass = classAssignments.filter((row) => String(row.grade_level || '') === String(profile?.grade_level || '') && String(row.section || '') === String(profile?.section || ''))
     const assignedRequirementIds = new Set(studentClass.map((row) => String(row.requirement_id)))
     studentAssignments.forEach((id) => assignedRequirementIds.add(id))
+    studentSubmissions.forEach((submission) => assignedRequirementIds.add(String(submission.requirement_id)))
     const hasAssignments = assignedRequirementIds.size > 0 || enrolledDepartmentIds.size > 0
     requirements.value = requirementsResult.data.map((row, index) => {
       const submission = studentSubmissions.find((item) => String(item.requirement_id) === String(row.id))
