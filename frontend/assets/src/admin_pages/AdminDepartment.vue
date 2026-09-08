@@ -247,7 +247,7 @@ onMounted(loadDepartments)
       <section class="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="department-detail-title">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#7c4fe0]">Student List</p>
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#7c4fe0]">Department Details</p>
             <h2 id="department-detail-title" class="mt-1 text-2xl font-black text-slate-950">{{ selectedDepartmentDetail.name }}</h2>
           </div>
           <button class="text-2xl font-semibold text-slate-400 hover:text-slate-700" aria-label="Close" @click="selectedDepartmentDetail = null">&times;</button>
@@ -264,16 +264,6 @@ onMounted(loadDepartments)
             <li v-for="requirement in selectedDepartmentDetail.requirements" :key="requirement" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-900">{{ requirement }}</li>
           </ul>
           <p v-else class="mt-2 text-sm text-slate-600">No requirements assigned yet.</p>
-        </div>
-
-        <div class="mt-5">
-          <h3 class="text-sm font-bold text-slate-950">Students assigned</h3>
-          <div v-if="selectedDepartmentDetail.studentIds.length" class="mt-2 space-y-2">
-            <p v-for="studentId in selectedDepartmentDetail.studentIds" :key="studentId" class="rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium text-slate-900">
-              {{ studentOptions.find((student) => student.id === studentId)?.name || 'Student' }}
-            </p>
-          </div>
-          <p v-else class="mt-2 text-sm text-slate-600">No students assigned yet.</p>
         </div>
 
         <div class="mt-6 flex justify-end"><button class="rounded-lg bg-[#8d63e8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#7f55dd]" @click="selectedDepartmentDetail = null">Close</button></div>
