@@ -99,6 +99,7 @@ const emit = defineEmits<{
 }>()
 
 function selectTheme(mode: ThemeMode) {
+  if (autoMatchSystem.value) return
   themeMode.value = mode
   emit('theme-change', mode)
 }
@@ -154,10 +155,13 @@ async function handleLogout() {
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <!-- Light Mode -->
             <label
-              class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="themeMode === 'light' ? 'border-[#7b57db] bg-[#ede9fe]/20' : 'border-gray-200 hover:border-gray-300 bg-white'"
+              class="relative flex flex-col p-4 rounded-xl border-2 transition-all"
+              :class="[
+                themeMode === 'light' ? 'border-[#7b57db] bg-[#ede9fe]/20' : 'border-gray-200 hover:border-gray-300 bg-white',
+                autoMatchSystem ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+              ]"
             >
-              <input type="radio" name="theme_mode" value="light" class="sr-only" :checked="themeMode === 'light'" @change="selectTheme('light')" />
+              <input type="radio" name="theme_mode" value="light" class="sr-only" :checked="themeMode === 'light'" :disabled="autoMatchSystem" @change="selectTheme('light')" />
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center space-x-2">
                   <svg class="w-5 h-5" :class="themeMode === 'light' ? 'text-[#7b57db]' : 'text-gray-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -192,10 +196,13 @@ async function handleLogout() {
 
             <!-- Dark Mode -->
             <label
-              class="relative flex flex-col p-4 rounded-xl border-2 cursor-pointer transition-all"
-              :class="themeMode === 'dark' ? 'border-[#7b57db] bg-[#ede9fe]/20' : 'border-gray-200 hover:border-gray-300 bg-white'"
+              class="relative flex flex-col p-4 rounded-xl border-2 transition-all"
+              :class="[
+                themeMode === 'dark' ? 'border-[#7b57db] bg-[#ede9fe]/20' : 'border-gray-200 hover:border-gray-300 bg-white',
+                autoMatchSystem ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+              ]"
             >
-              <input type="radio" name="theme_mode" value="dark" class="sr-only" :checked="themeMode === 'dark'" @change="selectTheme('dark')" />
+              <input type="radio" name="theme_mode" value="dark" class="sr-only" :checked="themeMode === 'dark'" :disabled="autoMatchSystem" @change="selectTheme('dark')" />
               <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center space-x-2">
                   <svg class="w-5 h-5" :class="themeMode === 'dark' ? 'text-[#7b57db]' : 'text-gray-500'" fill="none" stroke="currentColor" viewBox="0 0 24 24">
