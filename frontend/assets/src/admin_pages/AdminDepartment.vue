@@ -24,11 +24,11 @@ const activeSection = ref<'STEM' | 'GAS'>('STEM')
 
 const filteredDepartments = computed(() => departments.value.filter((item) =>
   item.gradeLevel.split(',').map((level) => level.trim()).includes(activeLevel.value) &&
-  (activeLevel.value !== 'Grade 11' && activeLevel.value !== 'Grade 12' || item.section === activeSection.value) &&
+  (activeLevel.value !== 'Grade 11' && activeLevel.value !== 'Grade 12' || item.section.split(',').map((section) => section.trim()).includes(activeSection.value)) &&
   item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
 ))
 
-async function addDepartment(form: { name: string; adviser: string; gradeLevels: string[]; section: string }) {
+async function addDepartment(form: { name: string; adviser: string; gradeLevels: string[]; sections: string[] }) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
@@ -43,7 +43,7 @@ async function addDepartment(form: { name: string; adviser: string; gradeLevels:
 
   const { data: createdDepartment, error } = await supabase
     .from('departments')
-    .insert({ name: departmentName, adviser: form.adviser.trim(), grade_level: form.gradeLevels.join(', '), section: form.section })
+    .insert({ name: departmentName, adviser: form.adviser.trim(), grade_level: form.gradeLevels.join(', '), section: form.sections.join(', ') })
     .select('id')
     .single()
   if (error) {
@@ -83,14 +83,15 @@ async function deleteDepartment(departmentId: string) {
   await loadDepartments()
 }
 
-async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevels: string[], section: string, studentIds: string[]) {
+async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevels: string[], sections: string[], studentIds: string[]) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
   }
 
   saveError.value = ''
-  const { error } = await supabase.from('departments').update({ name, adviser, grade_level: gradeLevels.join(', '), section }).eq('id', departmentId)
+  const uniqueStudentIds = Array.from(new Set(studentIds))
+  const { error } = await supabase.from('departments').update({ name, adviser, grade_level: gradeLevels.join(', '), section: sections.join(', ') }).eq('id', departmentId)
   if (error) {
     saveError.value = error.message
     return
@@ -102,9 +103,9 @@ async function updateDepartment(departmentId: string, name: string, adviser: str
     return
   }
 
-  if (studentIds.length > 0) {
+  if (uniqueStudentIds.length > 0) {
     const { error: membershipInsertError } = await supabase.from('department_students').insert(
-      studentIds.map((studentId) => ({ department_id: departmentId, student_id: studentId })),
+      uniqueStudentIds.map((studentId) => ({ department_id: departmentId, student_id: studentId })),
     )
     if (membershipInsertError) {
       saveError.value = `Students could not be saved: ${membershipInsertError.message}`
@@ -176,7 +177,10 @@ async function loadDepartments() {
   const studentsByDepartment = new Map<string, string[]>()
   membershipRows.forEach((row) => {
     const departmentId = String(row.department_id)
-    studentsByDepartment.set(departmentId, [...(studentsByDepartment.get(departmentId) || []), String(row.student_id)])
+    const studentIds = studentsByDepartment.get(departmentId) || []
+    const studentId = String(row.student_id)
+    if (!studentIds.includes(studentId)) studentIds.push(studentId)
+    studentsByDepartment.set(departmentId, studentIds)
   })
   departments.value = departmentResult.data.map((department) => {
     const id = department.id
