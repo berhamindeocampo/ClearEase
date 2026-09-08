@@ -27,44 +27,49 @@ const iconFor = (value: string) => {
 }
 
 async function loadRequirements() {
-  const [requirementsResult, submissionsResult, departmentsResult, profileResult, classAssignmentsResult, studentAssignmentsResult] = await Promise.all([
-    fetchRows('requirements'),
-    supabase ? supabase.rpc('get_my_clearance_submissions') : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
-    fetchRows('departments'),
-    supabase ? supabase.rpc('get_my_profile') : Promise.resolve({ data: null, error: null }),
-    supabase ? supabase.from('class_requirements').select('requirement_id, grade_level, section') : Promise.resolve({ data: [], error: null }),
-    supabase ? supabase.from('student_requirements').select('requirement_id') : Promise.resolve({ data: [], error: null }),
-  ])
-  loadError.value = requirementsResult.error || submissionsResult.error?.message || departmentsResult.error || classAssignmentsResult.error?.message || studentAssignmentsResult.error?.message || ''
-  const departmentNames = new Map(
-    departmentsResult.data.map((department) => [
-      String(department.id),
-      String(department.name || department.title || department.id),
-    ]),
-  )
-  const currentUser = await getCurrentUser()
-  const studentSubmissions = ((submissionsResult.data ?? []) as Record<string, any>[]).filter((row) => !currentUser || String(row.student_id) === String(currentUser.id))
-  const profile = profileResult.data as Record<string, any> | null
-  const classAssignments = (classAssignmentsResult.data ?? []) as Record<string, any>[]
-  const studentAssignments = new Set(((studentAssignmentsResult.data ?? []) as Record<string, any>[]).map((row) => String(row.requirement_id)))
-  const studentClass = classAssignments.filter((row) => String(row.grade_level || '') === String(profile?.grade_level || '') && String(row.section || '') === String(profile?.section || ''))
-  const assignedRequirementIds = new Set(studentClass.map((row) => String(row.requirement_id)))
-  studentAssignments.forEach((id) => assignedRequirementIds.add(id))
-  const hasAssignments = assignedRequirementIds.size > 0
-  requirements.value = requirementsResult.data.map((row, index) => {
-    const submission = studentSubmissions.find((item) => String(item.requirement_id) === String(row.id))
-    return {
-      id: String(row.id || index + 1),
-      title: String(row.title || row.name || 'Requirement'),
-      department: departmentNames.get(String(row.department_id)) || String(row.department_name || row.department || '—'),
-      requiredDocument: String(row.required_document || row.document || '—'),
-      instruction: String(row.instruction || row.instructions || '—'),
-      deadline: displayDate(row.deadline),
-      status: String(submission?.status || 'Pending').toLowerCase() === 'approved' ? 'Cleared' : String(submission?.status || 'Pending').toLowerCase() === 'rejected' ? 'Rejected' : String(submission?.status || 'Pending').toLowerCase() === 'in review' ? 'In Review' : 'Pending',
-      icon: iconFor(String(row.title || row.name || '')),
-    }
-  }).filter((item) => !hasAssignments || assignedRequirementIds.has(item.id))
-  isLoading.value = false
+  try {
+    const [requirementsResult, submissionsResult, departmentsResult, profileResult, classAssignmentsResult, studentAssignmentsResult] = await Promise.all([
+      fetchRows('requirements'),
+      supabase ? supabase.rpc('get_my_clearance_submissions') : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
+      fetchRows('departments'),
+      supabase ? supabase.rpc('get_my_profile') : Promise.resolve({ data: null, error: null }),
+      supabase ? supabase.from('class_requirements').select('requirement_id, grade_level, section') : Promise.resolve({ data: [], error: null }),
+      supabase ? supabase.from('student_requirements').select('requirement_id') : Promise.resolve({ data: [], error: null }),
+    ])
+    loadError.value = requirementsResult.error || submissionsResult.error?.message || departmentsResult.error || ''
+    const departmentNames = new Map(
+      departmentsResult.data.map((department) => [
+        String(department.id),
+        String(department.name || department.title || department.id),
+      ]),
+    )
+    const currentUser = await getCurrentUser()
+    const studentSubmissions = ((submissionsResult.data ?? []) as Record<string, any>[]).filter((row) => !currentUser || String(row.student_id) === String(currentUser.id))
+    const profile = profileResult.data as Record<string, any> | null
+    const classAssignments = (classAssignmentsResult.data ?? []) as Record<string, any>[]
+    const studentAssignments = new Set(((studentAssignmentsResult.data ?? []) as Record<string, any>[]).map((row) => String(row.requirement_id)))
+    const studentClass = classAssignments.filter((row) => String(row.grade_level || '') === String(profile?.grade_level || '') && String(row.section || '') === String(profile?.section || ''))
+    const assignedRequirementIds = new Set(studentClass.map((row) => String(row.requirement_id)))
+    studentAssignments.forEach((id) => assignedRequirementIds.add(id))
+    const hasAssignments = assignedRequirementIds.size > 0
+    requirements.value = requirementsResult.data.map((row, index) => {
+      const submission = studentSubmissions.find((item) => String(item.requirement_id) === String(row.id))
+      return {
+        id: String(row.id || index + 1),
+        title: String(row.title || row.name || 'Requirement'),
+        department: departmentNames.get(String(row.department_id)) || String(row.department_name || row.department || '—'),
+        requiredDocument: String(row.required_document || row.document || '—'),
+        instruction: String(row.instruction || row.instructions || '—'),
+        deadline: displayDate(row.deadline),
+        status: String(submission?.status || 'Pending').toLowerCase() === 'approved' ? 'Cleared' : String(submission?.status || 'Pending').toLowerCase() === 'rejected' ? 'Rejected' : String(submission?.status || 'Pending').toLowerCase() === 'in review' ? 'In Review' : 'Pending',
+        icon: iconFor(String(row.title || row.name || '')),
+      }
+    }).filter((item) => !hasAssignments || assignedRequirementIds.has(item.id))
+  } catch (error: any) {
+    loadError.value = error?.message || 'Requirements could not be loaded.'
+  } finally {
+    isLoading.value = false
+  }
 }
 
 onMounted(loadRequirements)

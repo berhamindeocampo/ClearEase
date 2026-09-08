@@ -17,9 +17,34 @@ on public.department_students for select to authenticated
 using (student_id = auth.uid() or public.current_role() in ('admin', 'school_personnel'));
 
 drop policy if exists "department_students_admin_manage" on public.department_students;
-create policy "department_students_admin_manage"
-on public.department_students for all to authenticated
-using (public.current_role() = 'admin')
-with check (public.current_role() = 'admin');
+drop policy if exists "department_students_admin_insert" on public.department_students;
+drop policy if exists "department_students_admin_update" on public.department_students;
+drop policy if exists "department_students_admin_delete" on public.department_students;
+create policy "department_students_admin_insert"
+on public.department_students for insert to authenticated
+with check (exists (
+  select 1 from public.profiles
+  where role = 'admin'
+    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
+));
+create policy "department_students_admin_update"
+on public.department_students for update to authenticated
+using (exists (
+  select 1 from public.profiles
+  where role = 'admin'
+    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
+))
+with check (exists (
+  select 1 from public.profiles
+  where role = 'admin'
+    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
+));
+create policy "department_students_admin_delete"
+on public.department_students for delete to authenticated
+using (exists (
+  select 1 from public.profiles
+  where role = 'admin'
+    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
+));
 
 notify pgrst, 'reload schema';
