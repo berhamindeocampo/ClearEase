@@ -51,14 +51,69 @@ const filteredStudents = computed(() => {
 
 const loadClassList = async () => {
   isLoading.value = true
+  if (!supabase) {
+    loadError.value = 'Supabase is not configured.'
+    isLoading.value = false
+    return
+  }
+
   const [profilesResult, requirementsResult, departmentsResult] = await Promise.all([
     supabase.rpc('get_staff_department_students'),
     fetchRows('requirements'),
     fetchRows('departments'),
   ])
 
-  loadError.value = profilesResult.error?.message || requirementsResult.error || departmentsResult.error || ''
-  students.value = profilesResult.data
+  let profileRows = profilesResult.data ?? []
+  let profileError = profilesResult.error?.message ?? ''
+
+  if (profilesResult.error) {
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user) {
+      profileError = userError?.message || 'Unable to identify the signed-in school personnel account.'
+    } else {
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from('department_personnel')
+        .select('department_id')
+        .eq('personnel_id', userData.user.id)
+
+      if (assignmentsError) {
+        profileError = assignmentsError.message
+      } else {
+        const departmentIds = [...new Set((assignments ?? []).map((row) => String(row.department_id)))]
+        if (departmentIds.length === 0) {
+          profileRows = []
+          profileError = ''
+        } else {
+          const { data: memberships, error: membershipsError } = await supabase
+            .from('department_students')
+            .select('student_id')
+            .in('department_id', departmentIds)
+
+          if (membershipsError) {
+            profileError = membershipsError.message
+          } else {
+            const studentIds = [...new Set((memberships ?? []).map((row) => String(row.student_id)))]
+            if (studentIds.length === 0) {
+              profileRows = []
+              profileError = ''
+            } else {
+              const { data: fallbackProfiles, error: fallbackError } = await supabase
+                .from('profiles')
+                .select('*')
+                .in('id', studentIds)
+                .eq('role', 'student')
+
+              profileRows = fallbackProfiles ?? []
+              profileError = fallbackError?.message ?? ''
+            }
+          }
+        }
+      }
+    }
+  }
+
+  loadError.value = profileError || requirementsResult.error || departmentsResult.error || ''
+  students.value = profileRows
     .filter((row) => String(row.role || '').toLowerCase() === 'student')
     .map((row) => ({
       id: String(row.id),
