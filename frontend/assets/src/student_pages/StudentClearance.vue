@@ -86,7 +86,7 @@ onMounted(loadClearance)
 							<h1 class="text-xl font-black">Student Information</h1>
 							<dl class="mt-7 space-y-3 text-base">
 								<div class="flex gap-2"><dt class="font-bold">Name:</dt><dd>{{ studentName }}</dd></div>
-								<div class="flex gap-2"><dt class="font-bold">Student ID:</dt><dd>{{ studentId }}</dd></div>
+								<div class="flex gap-2"><dt class="font-bold">School ID:</dt><dd>{{ studentId }}</dd></div>
 								<div class="flex gap-2"><dt class="font-bold">Email:</dt><dd class="break-all">{{ email }}</dd></div>
 							</dl>
 						</div>

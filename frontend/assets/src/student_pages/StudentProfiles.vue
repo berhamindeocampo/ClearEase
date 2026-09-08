@@ -154,7 +154,7 @@ const handleLogOut = async () => {
           <!-- Name & ID -->
           <div class="text-center sm:text-left">
             <h2 class="text-2xl font-bold text-gray-800">{{ student.fullName }}</h2>
-            <p class="text-gray-500 mt-1">Student ID: <span class="font-medium text-gray-700">{{ student.studentId }}</span></p>
+            <p class="text-gray-500 mt-1">School ID: <span class="font-medium text-gray-700">{{ student.studentId }}</span></p>
             <p class="text-gray-500">{{ student.gradeLevel }}</p>
           </div>
         </div>
@@ -180,7 +180,7 @@ const handleLogOut = async () => {
                 <p class="font-medium text-gray-800">{{ student.fullName }}</p>
               </div>
               <div>
-                <p class="text-sm text-gray-500">Student ID</p>
+                <p class="text-sm text-gray-500">School ID</p>
                 <p class="font-medium text-gray-800">{{ student.studentId }}</p>
               </div>
               <div>

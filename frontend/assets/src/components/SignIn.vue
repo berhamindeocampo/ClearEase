@@ -117,15 +117,15 @@ const handleSubmit = async () => {
                 required 
               />
             </div>
-            <!-- Student ID Field -->
+            <!-- School ID Field -->
             <div>
-              <label class="block text-xs font-semibold text-gray-700 mb-1" for="studentId">Student ID</label>
+              <label class="block text-xs font-semibold text-gray-700 mb-1" for="studentId">School ID</label>
               <input 
                 v-model="form.studentId"
                 class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/20 outline-none transition-all duration-200 text-sm" 
                 id="studentId" 
                 type="text" 
-                placeholder="Enter your student ID" 
+                placeholder="Enter your school ID"
                 required 
               />
             </div>
