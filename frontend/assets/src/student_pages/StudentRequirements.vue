@@ -11,7 +11,7 @@ const activeFilter = ref('All')
 const selectedRequirement = ref<string | null>(null)
 const activePopup = ref<'details' | 'submit' | null>(null)
 
-const requirements = ref<Array<{ id: string; title: string; department: string; departmentId: string; requiredDocument: string; instruction: string; deadline: string; status: string; icon: typeof BookOpen }>>([])
+const requirements = ref<Array<{ id: string; title: string; department: string; departmentId: string; requiredDocument: string; instruction: string; deadline: string; status: string; fileName: string; filePath: string; icon: typeof BookOpen }>>([])
 const isLoading = ref(true)
 const loadError = ref('')
 const isSubmitting = ref(false)
@@ -67,7 +67,9 @@ async function loadRequirements() {
         requiredDocument: String(row.required_document || row.document || '—'),
         instruction: String(row.instruction || row.instructions || '—'),
         deadline: displayDate(row.deadline),
-        status: String(submission?.status || 'Pending').toLowerCase() === 'approved' ? 'Cleared' : String(submission?.status || 'Pending').toLowerCase() === 'rejected' ? 'Rejected' : String(submission?.status || 'Pending').toLowerCase() === 'in review' ? 'In Review' : 'Pending',
+        status: ['approved', 'cleared', 'completed'].includes(String(submission?.status || 'Pending').toLowerCase()) ? 'Cleared' : String(submission?.status || 'Pending').toLowerCase() === 'rejected' ? 'Rejected' : String(submission?.status || 'Pending').toLowerCase() === 'in review' ? 'In Review' : 'Pending',
+        fileName: String(submission?.file_name || ''),
+        filePath: String(submission?.file_path || ''),
         icon: iconFor(String(row.title || row.name || '')),
       }
     }).filter((item) => !hasAssignments || assignedRequirementIds.has(item.id) || enrolledDepartmentIds.has(item.departmentId))

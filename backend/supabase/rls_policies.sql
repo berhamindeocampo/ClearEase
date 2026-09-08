@@ -383,6 +383,12 @@ alter table if exists public.clearance_submissions
   add column if not exists file_path text,
   add column if not exists remarks text;
 
+alter table public.clearance_submissions
+  drop constraint if exists clearance_submissions_status_check;
+alter table public.clearance_submissions
+  add constraint clearance_submissions_status_check
+  check (lower(status) in ('pending', 'in review', 'approved', 'rejected', 'cleared', 'completed', 'for action'));
+
 create or replace function public.submit_clearance_requirement(
   p_requirement_id uuid,
   p_file_name text,
@@ -407,12 +413,13 @@ begin
     file_name,
     file_path
   )
-  values (auth.uid(), p_requirement_id, 'pending', p_file_name, p_file_path)
+  values (auth.uid(), p_requirement_id, 'in review', p_file_name, p_file_path)
   on conflict (requirement_id, student_id)
   do update set
-    status = 'pending',
+    status = 'in review',
     file_name = excluded.file_name,
-    file_path = excluded.file_path
+    file_path = excluded.file_path,
+    remarks = null
   returning * into submission;
 
   return submission;
@@ -529,6 +536,14 @@ drop policy if exists "submission_files_student_upload" on storage.objects;
 create policy "submission_files_student_upload"
 on storage.objects for insert to authenticated
 with check (
+  bucket_id = 'clearance-submissions'
+  and (storage.foldername(name))[1] = auth.uid()::text
+);
+
+drop policy if exists "submission_files_student_read_own" on storage.objects;
+create policy "submission_files_student_read_own"
+on storage.objects for select to authenticated
+using (
   bucket_id = 'clearance-submissions'
   and (storage.foldername(name))[1] = auth.uid()::text
 );
