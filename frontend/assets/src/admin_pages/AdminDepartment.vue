@@ -233,7 +233,7 @@ onMounted(loadDepartments)
           <div class="text-center font-semibold text-slate-900">{{ dept.studentIds.length }}</div>
           <div class="text-right">
             <button class="mr-2 rounded-lg border border-[#8d63e8] px-2 py-1 text-xs font-semibold text-[#7c4fe0] hover:bg-[#f3edff]" @click.stop="selectedDepartmentDetail = dept">
-              List
+              Preview
             </button>
             <button class="bg-[#8d63e8] text-white rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click.stop="selectedDepartment = dept; activePopup = 'manage'">
               {{ dept.action }}
