@@ -64,7 +64,6 @@ const session = (() => {
 })()
 
 const userRole = computed<UserRole>(() => session?.role ?? 'student')
-const isStudent = computed(() => userRole.value === 'student')
 
 interface AccountProfile {
   name: string
@@ -250,7 +249,7 @@ async function handleLogout() {
         </div>
 
         <!-- Account & Session Card -->
-        <div v-if="!isStudent" class="bg-white rounded-2xl p-6 lg:p-8 shadow-[0_4px_20px_-2px_rgba(99,102,241,0.07),0_2px_6px_-1px_rgba(0,0,0,0.04)] border border-gray-100">
+        <div class="bg-white rounded-2xl p-6 lg:p-8 shadow-[0_4px_20px_-2px_rgba(99,102,241,0.07),0_2px_6px_-1px_rgba(0,0,0,0.04)] border border-gray-100">
           <div class="flex items-center space-x-3 pb-5 border-b border-gray-100 mb-6">
             <div class="p-2.5 bg-purple-50 rounded-xl text-[#7b57db]">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

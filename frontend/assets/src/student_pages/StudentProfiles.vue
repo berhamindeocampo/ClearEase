@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useRouter } from 'vue-router'
 import { supabase, useAuth } from '../composables/auth'
 
-const router = useRouter()
-const { logOut, changePassword } = useAuth()
+const { changePassword } = useAuth()
 const isEditingProfile = ref(false)
 const isSavingProfile = ref(false)
 const isUpdatingPassword = ref(false)
@@ -246,14 +244,6 @@ const handleUpdatePassword = async () => {
   }
 };
 
-const handleLogOut = async () => {
-  try {
-    await logOut()
-    router.push('/login')
-  } catch (err) {
-    console.error('Logout failed:', err)
-  }
-}
 </script>
 
 <template>
@@ -279,12 +269,6 @@ const handleLogOut = async () => {
           </div>
         </div>
 
-        <button
-          @click="handleLogOut"
-          class="px-4 py-2 rounded-md bg-red-600 text-white font-medium hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
-        >
-          Logout
-        </button>
       </div>
 
       <!-- Grid Layout for Details & Password Form -->
