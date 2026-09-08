@@ -50,7 +50,7 @@ const showPasswordForm = ref<boolean>(false);
 const errorMessage = ref<string>('');
 const profileMessage = ref<string>('')
 const isLoadingProfile = ref(false)
-const gradeLevelOptions = ['N/A', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+const gradeLevelOptions = ['N/A', 'Grade 11', 'Grade 12']
 
 const student = ref<StudentProfile>({
   fullName: 'Student',
@@ -64,10 +64,6 @@ const student = ref<StudentProfile>({
 });
 
 const sectionOptions = computed(() => {
-  if (['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].includes(student.value.gradeLevel)) {
-    return ['N/A', 'Section A', 'Section B', 'Section C']
-  }
-
   if (['Grade 11', 'Grade 12'].includes(student.value.gradeLevel)) {
     return ['N/A', 'STEM', 'GAS']
   }
