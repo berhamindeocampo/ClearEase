@@ -7,6 +7,9 @@ import universityLogo from '../assets/stpaul.png'
 
 const router = useRouter()
 const { signUp } = useAuth()
+const goBack = () => {
+  router.back()
+}
 
 interface FormData {
   email: string
@@ -95,33 +98,44 @@ const handleSignUp = async (): Promise<void> => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-8">
-    <div class="w-full max-w-[980px]">
-      <div class="flex justify-center mb-6">
+  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-4">
+    <div class="w-full max-w-[820px]">
+      <div class="flex justify-center mb-3">
         <img
           :src="universityLogo"
           alt="St. Paul University"
-          class="h-20 md:h-24 object-contain"
+          class="h-14 md:h-16 object-contain"
         />
       </div>
 
-      <div class="mx-auto w-full max-w-[520px] rounded-[28px] bg-white/90 p-6 shadow-[0_18px_40px_rgba(56,34,75,0.12)] md:p-8">
-        <div class="flex justify-center mb-6">
+      <div class="relative mx-auto w-full max-w-[440px] rounded-[22px] bg-white/90 p-5 shadow-[0_18px_40px_rgba(56,34,75,0.12)] md:p-6">
+        <button
+          type="button"
+          @click="goBack"
+          class="absolute left-4 top-4 flex items-center gap-1 text-sm font-semibold text-purple-700 hover:text-purple-900"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
+
+        <div class="flex justify-center mb-3 mt-4">
           <img
             :src="cleareaseLogo"
             alt="ClearEase Logo"
-            class="h-20 md:h-24 object-contain"
+            class="h-14 md:h-16 object-contain"
           />
         </div>
 
-        <h1 class="text-center text-4xl font-bold text-gray-900">Welcome!</h1>
-        <p class="mt-3 text-center text-lg text-gray-700">
+        <h1 class="text-center text-2xl font-bold text-gray-900">Welcome!</h1>
+        <p class="mt-1 text-center text-sm text-gray-700">
           Sign up to start checking your Clearance.
         </p>
 
-        <form @submit.prevent="handleSignUp" class="mt-8 space-y-5">
+        <form @submit.prevent="handleSignUp" class="mt-5 space-y-3">
           <div>
-            <label class="mb-2 block text-xl font-bold text-gray-900">
+            <label class="mb-1 block text-sm font-bold text-gray-900">
               Email
             </label>
             <input
@@ -129,7 +143,7 @@ const handleSignUp = async (): Promise<void> => {
               type="email"
               placeholder="Enter your email"
               required
-              class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:border-purple-500"
+              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-purple-500"
             />
             <span v-if="errors.email" class="mt-1 block text-xs text-red-500">
               {{ errors.email }}
@@ -137,7 +151,7 @@ const handleSignUp = async (): Promise<void> => {
           </div>
 
           <div>
-            <label class="mb-2 block text-xl font-bold text-gray-900">
+            <label class="mb-1 block text-sm font-bold text-gray-900">
               Full Name
             </label>
             <input
@@ -145,12 +159,12 @@ const handleSignUp = async (): Promise<void> => {
               type="text"
               placeholder="Enter your full name"
               required
-              class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:border-purple-500"
+              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-purple-500"
             />
           </div>
 
           <div>
-            <label class="mb-2 block text-xl font-bold text-gray-900">
+            <label class="mb-1 block text-sm font-bold text-gray-900">
               Student ID
             </label>
             <input
@@ -158,12 +172,12 @@ const handleSignUp = async (): Promise<void> => {
               type="text"
               placeholder="Enter your student ID"
               required
-              class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:border-purple-500"
+              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-purple-500"
             />
           </div>
 
           <div>
-            <label class="mb-2 block text-xl font-bold text-gray-900">
+            <label class="mb-1 block text-sm font-bold text-gray-900">
               Password
             </label>
             <div class="relative">
@@ -172,7 +186,7 @@ const handleSignUp = async (): Promise<void> => {
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Create a password"
                 required
-                class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 pr-12 text-base text-gray-800 outline-none transition focus:border-purple-500"
+                class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 pr-10 text-sm text-gray-800 outline-none transition focus:border-purple-500"
               />
               <button
                 type="button"
@@ -181,7 +195,7 @@ const handleSignUp = async (): Promise<void> => {
               >
                 <svg
                   v-if="!showPassword"
-                  class="h-5 w-5"
+                  class="h-4 w-4"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -194,7 +208,7 @@ const handleSignUp = async (): Promise<void> => {
                 </svg>
                 <svg
                   v-else
-                  class="h-5 w-5"
+                  class="h-4 w-4"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                 >
@@ -220,7 +234,7 @@ const handleSignUp = async (): Promise<void> => {
               required
               class="h-4 w-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
             />
-            <label for="terms" class="ml-2 text-sm text-gray-700">
+            <label for="terms" class="ml-2 text-xs text-gray-700">
               I agree to the Terms of Service and Privacy Policy
             </label>
           </div>
@@ -228,22 +242,22 @@ const handleSignUp = async (): Promise<void> => {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full rounded-2xl bg-[#7a4ed6] py-3 text-xl font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
+            class="w-full rounded-xl bg-[#7a4ed6] py-2.5 text-base font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
           >
             <span v-if="isLoading">Signing Up...</span>
             <span v-else>Sign Up</span>
           </button>
         </form>
 
-        <div v-if="errors.submit" class="mt-6 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div v-if="errors.submit" class="mt-4 rounded-lg border border-red-200 bg-red-50 p-2.5 text-xs text-red-700">
           {{ errors.submit }}
         </div>
 
-        <div v-if="successMessage" class="mt-6 rounded-xl border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <div v-if="successMessage" class="mt-4 rounded-lg border border-green-200 bg-green-50 p-2.5 text-xs text-green-700">
           {{ successMessage }}
         </div>
 
-        <p class="mt-6 text-center text-lg text-gray-700">
+        <p class="mt-4 text-center text-sm text-gray-700">
           Already have an account?
           <router-link to="/login" class="font-bold text-purple-700 hover:underline">
             Log In
