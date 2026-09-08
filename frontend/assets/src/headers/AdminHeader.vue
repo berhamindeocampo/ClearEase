@@ -55,7 +55,7 @@ a {
               :key="item.id"
               :to="item.path"
               :class="[
-                'px-5 py-2.5 rounded-[18px] text-base md:text-[1.05rem] font-semibold transition-all duration-200',
+                'admin-nav-link px-5 py-2.5 rounded-[18px] text-base md:text-[1.05rem] font-semibold transition-all duration-200',
                 isActive(item.path)
                   ? 'bg-[#8D63E8] text-white shadow-[0_4px_12px_rgba(141,99,232,0.35)]'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -95,7 +95,7 @@ a {
             :to="item.path"
             @click="isMobileMenuOpen = false"
             :class="[
-              'px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200',
+              'admin-nav-link px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200',
               isActive(item.path)
                 ? 'bg-[#8D63E8] text-white'
                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'

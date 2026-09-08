@@ -9,7 +9,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import Header from './headers/Header.vue'
 import SPHeader from './headers/SPHeader.vue'
@@ -17,6 +17,20 @@ import AdminHeader from './headers/AdminHeader.vue'
 import Footer from './components/Footer.vue'
 
 const route = useRoute()
+const THEME_MODE_KEY = 'clearease-theme-mode'
+
+function applyRouteTheme() {
+  const isPublicRoute = ['landing', 'login', 'signin'].includes(String(route.name))
+  if (isPublicRoute) {
+    document.documentElement.dataset.theme = 'light'
+    return
+  }
+
+  const savedTheme = localStorage.getItem(THEME_MODE_KEY)
+  document.documentElement.dataset.theme = savedTheme === 'dark' ? 'dark' : 'light'
+}
+
+watch(() => route.name, applyRouteTheme, { immediate: true })
 const isLandingPage = computed(() => route.name === 'landing')
 const isAdminRoute = computed(() => route.path === '/admindashboard' || route.path.startsWith('/admin/'))
 const isSchoolPersonnelRoute = computed(() => route.path.startsWith('/sp/'))

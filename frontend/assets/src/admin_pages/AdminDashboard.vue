@@ -39,7 +39,7 @@ const counts = computed(() => {
 })
 
 const overviewPercentages = computed(() => {
-  const total = counts.value.inProgress + counts.value.completed + counts.value.action
+  const total = counts.value.completed + counts.value.inProgress + counts.value.action
   if (!total) return { completed: 0, inProgress: 0, action: 0 }
 
   return {

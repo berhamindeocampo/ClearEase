@@ -22,6 +22,65 @@
 	color: #e5e7eb;
 }
 
+:root[data-theme='dark'] .bg-\[\#f0efff\],
+:root[data-theme='dark'] .bg-\[\#f0effc\],
+:root[data-theme='dark'] .bg-\[\#f1eefb\] {
+	background-color: #111827 !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#f2f1f4\],
+:root[data-theme='dark'] .bg-\[\#f3f4f6\],
+:root[data-theme='dark'] .bg-\[\#f7f7fb\],
+:root[data-theme='dark'] .bg-slate-50 {
+	background-color: #1f2937 !important;
+}
+
+:root[data-theme='dark'] .text-\[\#111111\],
+:root[data-theme='dark'] .text-\[\#444444\],
+:root[data-theme='dark'] .text-slate-600,
+:root[data-theme='dark'] .text-slate-700,
+:root[data-theme='dark'] .text-black {
+	color: #e5e7eb !important;
+}
+
+:root[data-theme='dark'] .text-\[\#5225bd\],
+:root[data-theme='dark'] .text-\[\#6937d8\] {
+	color: #c4b5fd !important;
+}
+
+:root[data-theme='dark'] .border-\[\#dfe3ea\],
+:root[data-theme='dark'] .border-\[\#edf0f4\],
+:root[data-theme='dark'] .border-\[\#cccccc\],
+:root[data-theme='dark'] .border-\[\#e8e2f7\] {
+	border-color: #475569 !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#f2ebff\] {
+	background-color: #312e81 !important;
+}
+
+:root[data-theme='dark'] .bg-slate-100 {
+	background-color: #374151 !important;
+}
+
+:root[data-theme='dark'] .bg-gray-50\/50 {
+	background-color: #273449 !important;
+}
+
+:root[data-theme='dark'] .hover\:bg-slate-200:hover {
+	background-color: #4b5563 !important;
+}
+
+:root[data-theme='dark'] .admin-nav-link:not(.bg-\[\#8D63E8\]) {
+	color: #cbd5e1 !important;
+	background-color: transparent !important;
+}
+
+:root[data-theme='dark'] .admin-nav-link:not(.bg-\[\#8D63E8\]):hover {
+	color: #f9fafb !important;
+	background-color: #374151 !important;
+}
+
 :root[data-theme='dark'] .bg-gray-100,
 :root[data-theme='dark'] .bg-gray-50 {
 	background-color: #111827 !important;
@@ -32,7 +91,12 @@
 	border-color: #475569 !important;
 }
 
+:root[data-theme='dark'] .border-gray-100 {
+	border-color: #475569 !important;
+}
+
 :root[data-theme='dark'] .text-slate-900,
+:root[data-theme='dark'] .text-slate-800,
 :root[data-theme='dark'] .text-gray-900,
 :root[data-theme='dark'] .text-gray-800 {
 	color: #f9fafb !important;
@@ -41,7 +105,8 @@
 :root[data-theme='dark'] .text-slate-700,
 :root[data-theme='dark'] .text-gray-700,
 :root[data-theme='dark'] .text-gray-600,
-:root[data-theme='dark'] .text-gray-500 {
+:root[data-theme='dark'] .text-gray-500,
+:root[data-theme='dark'] .text-gray-400 {
 	color: #cbd5e1 !important;
 }
 

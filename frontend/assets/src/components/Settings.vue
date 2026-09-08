@@ -6,43 +6,25 @@ import { useAuth } from '../composables/auth'
 type ThemeMode = 'light' | 'dark'
 
 const THEME_MODE_KEY = 'clearease-theme-mode'
-const AUTO_MATCH_KEY = 'clearease-auto-match-system'
 
 const themeMode = ref<ThemeMode>('light')
-const autoMatchSystem = ref(false)
 const router = useRouter()
 const { logOut } = useAuth()
 const isLoggingOut = ref(false)
-let systemThemeQuery: MediaQueryList | null = null
-
-function getSystemTheme(): ThemeMode {
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
 
 function applyTheme() {
-  const effectiveTheme = autoMatchSystem.value ? getSystemTheme() : themeMode.value
-  document.documentElement.dataset.theme = effectiveTheme
+  document.documentElement.dataset.theme = themeMode.value
 }
 
 onMounted(() => {
   const savedTheme = localStorage.getItem(THEME_MODE_KEY)
-  const savedAutoMatch = localStorage.getItem(AUTO_MATCH_KEY)
 
   if (savedTheme === 'light' || savedTheme === 'dark') themeMode.value = savedTheme
-  if (savedAutoMatch !== null) autoMatchSystem.value = savedAutoMatch === 'true'
   applyTheme()
-
-  systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  systemThemeQuery.addEventListener('change', applyTheme)
 })
 
 watch(themeMode, (mode) => {
   localStorage.setItem(THEME_MODE_KEY, mode)
-  if (!autoMatchSystem.value) applyTheme()
-})
-
-watch(autoMatchSystem, (enabled) => {
-  localStorage.setItem(AUTO_MATCH_KEY, String(enabled))
   applyTheme()
 })
 
@@ -227,19 +209,6 @@ async function handleLogout() {
             </label>
           </div>
 
-          <!-- Auto-match toggle -->
-          <div class="p-4 rounded-xl border border-gray-100 bg-gray-50/50 flex items-center justify-between">
-            <div class="space-y-0.5">
-              <span class="text-xs font-semibold text-gray-800">Auto-match system preference</span>
-              <p class="text-[11px] text-gray-500">Sync theme automatically with your operating system display settings</p>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
-              <input v-model="autoMatchSystem" type="checkbox" class="sr-only peer" />
-              <div
-                class="w-10 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7b57db]"
-              />
-            </label>
-          </div>
         </div>
 
         <!-- Account & Session Card -->
