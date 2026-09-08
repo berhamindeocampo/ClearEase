@@ -34,12 +34,12 @@ async function loadRequirements() {
       fetchRows('departments'),
       supabase ? supabase.rpc('get_my_profile') : Promise.resolve({ data: null, error: null }),
       supabase ? supabase.from('class_requirements').select('requirement_id, grade_level, section') : Promise.resolve({ data: [], error: null }),
-      supabase ? supabase.from('student_requirements').select('requirement_id') : Promise.resolve({ data: [], error: null }),
+      supabase ? supabase.rpc('get_my_student_requirements') : Promise.resolve({ data: [], error: null }),
       supabase
         ? supabase.from('department_students').select('department_id').eq('student_id', (await supabase.auth.getUser()).data.user?.id || '')
         : Promise.resolve({ data: [], error: null }),
     ])
-    loadError.value = requirementsResult.error || submissionsResult.error?.message || departmentsResult.error || ''
+    loadError.value = requirementsResult.error || submissionsResult.error?.message || departmentsResult.error || studentAssignmentsResult.error?.message || ''
     const departmentNames = new Map(
       departmentsResult.data.map((department) => [
         String(department.id),

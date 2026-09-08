@@ -233,13 +233,36 @@ with check (public.current_role() in ('admin', 'school_personnel'));
 drop policy if exists "student_requirements_read_own_or_staff" on public.student_requirements;
 create policy "student_requirements_read_own_or_staff"
 on public.student_requirements for select to authenticated
-using (student_id = auth.uid() or public.current_role() in ('admin', 'school_personnel'));
+using (
+  student_id = auth.uid()
+  or exists (
+    select 1
+    from public.profiles student
+    where student.id = student_requirements.student_id
+      and lower(student.email) = lower(coalesce(auth.email(), ''))
+  )
+  or public.current_role() in ('admin', 'school_personnel')
+);
 
 drop policy if exists "student_requirements_staff_manage" on public.student_requirements;
 create policy "student_requirements_staff_manage"
 on public.student_requirements for all to authenticated
-using (public.current_role() in ('admin', 'school_personnel'))
-with check (public.current_role() in ('admin', 'school_personnel'));
+using (
+  exists (
+    select 1
+    from public.profiles actor
+    where (actor.id = auth.uid() or lower(actor.email) = lower(coalesce(auth.email(), '')))
+      and actor.role in ('admin', 'school_personnel')
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles actor
+    where (actor.id = auth.uid() or lower(actor.email) = lower(coalesce(auth.email(), '')))
+      and actor.role in ('admin', 'school_personnel')
+  )
+);
 
 drop policy if exists "department_students_read_authenticated" on public.department_students;
 create policy "department_students_read_authenticated"
@@ -261,6 +284,7 @@ create policy "department_students_admin_delete"
 on public.department_students for delete to authenticated
 using (public.is_admin_user());
 
+drop function if exists public.get_my_enrolled_departments();
 create or replace function public.get_my_enrolled_departments()
 returns table (
   department_id uuid,
@@ -286,6 +310,7 @@ $$;
 revoke execute on function public.get_my_enrolled_departments() from public;
 grant execute on function public.get_my_enrolled_departments() to authenticated;
 
+drop function if exists public.get_my_assigned_departments();
 create or replace function public.get_my_assigned_departments()
 returns table (department_id uuid, department_name text, grade_level text, section text, adviser text)
 language sql stable security definer set search_path = public
@@ -302,6 +327,59 @@ $$;
 
 revoke execute on function public.get_my_assigned_departments() from public;
 grant execute on function public.get_my_assigned_departments() to authenticated;
+
+drop function if exists public.get_my_student_requirements();
+create function public.get_my_student_requirements()
+returns table (requirement_id uuid)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select sr.requirement_id
+  from public.student_requirements sr
+  join public.profiles student on student.id = sr.student_id
+  where sr.student_id = auth.uid()
+     or lower(student.email) = lower(coalesce(auth.email(), ''));
+$$;
+
+revoke execute on function public.get_my_student_requirements() from public;
+grant execute on function public.get_my_student_requirements() to authenticated;
+
+drop function if exists public.assign_student_requirement(uuid, uuid);
+create function public.assign_student_requirement(
+  p_student_id uuid,
+  p_requirement_id uuid
+)
+returns public.student_requirements
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  assignment public.student_requirements;
+begin
+  if not exists (
+    select 1
+    from public.profiles actor
+    where (actor.id = auth.uid() or lower(actor.email) = lower(coalesce(auth.email(), '')))
+      and actor.role in ('admin', 'school_personnel')
+  ) then
+    raise exception 'Only administrators and school personnel can assign requirements';
+  end if;
+
+  insert into public.student_requirements (student_id, requirement_id, assigned_by)
+  values (p_student_id, p_requirement_id, auth.uid())
+  on conflict (student_id, requirement_id)
+  do update set assigned_by = auth.uid()
+  returning * into assignment;
+
+  return assignment;
+end;
+$$;
+
+revoke execute on function public.assign_student_requirement(uuid, uuid) from public;
+grant execute on function public.assign_student_requirement(uuid, uuid) to authenticated;
 
 alter table if exists public.clearance_submissions
   add column if not exists file_name text,
@@ -375,6 +453,7 @@ $$;
 revoke execute on function public.get_staff_clearance_submissions() from public;
 grant execute on function public.get_staff_clearance_submissions() to authenticated;
 
+drop function if exists public.get_staff_department_students();
 create or replace function public.get_staff_department_students()
 returns setof public.profiles
 language sql
@@ -636,16 +715,24 @@ on public.activity_logs for insert to authenticated
 with check (user_id = auth.uid());
 
 -- Never expose the legacy plaintext-password table through the browser API.
-alter table if exists public.users enable row level security;
-drop policy if exists "users_no_browser_access" on public.users;
-create policy "users_no_browser_access"
-on public.users for all to anon, authenticated
-using (false)
-with check (false);
+do $$
+begin
+  if to_regclass('public.users') is not null then
+    execute 'alter table public.users enable row level security';
+    execute 'drop policy if exists "users_no_browser_access" on public.users';
+    execute 'create policy "users_no_browser_access" on public.users for all to anon, authenticated using (false) with check (false)';
+  end if;
+end;
+$$;
 
-alter table if exists public.clearease_personnel enable row level security;
-drop policy if exists "personnel_no_browser_access" on public.clearease_personnel;
-create policy "personnel_no_browser_access"
-on public.clearease_personnel for all to anon, authenticated
-using (false)
-with check (false);
+do $$
+begin
+  if to_regclass('public.clearease_personnel') is not null then
+    execute 'alter table public.clearease_personnel enable row level security';
+    execute 'drop policy if exists "personnel_no_browser_access" on public.clearease_personnel';
+    execute 'create policy "personnel_no_browser_access" on public.clearease_personnel for all to anon, authenticated using (false) with check (false)';
+  end if;
+end;
+$$;
+
+notify pgrst, 'reload schema';

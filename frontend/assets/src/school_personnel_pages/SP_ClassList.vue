@@ -235,10 +235,10 @@ const addRequirement = async () => {
   if (!supabase || !selectedStudent.value || !selectedRequirementId.value) return
   isSaving.value = true
   loadError.value = ''
-  const { error } = await supabase.from('student_requirements').upsert({
-    student_id: selectedStudent.value.id,
-    requirement_id: selectedRequirementId.value,
-  }, { onConflict: 'student_id,requirement_id' })
+  const { error } = await supabase.rpc('assign_student_requirement', {
+    p_student_id: selectedStudent.value.id,
+    p_requirement_id: selectedRequirementId.value,
+  })
 
   if (error) {
     loadError.value = error.message
