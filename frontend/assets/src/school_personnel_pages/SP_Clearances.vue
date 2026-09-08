@@ -11,7 +11,7 @@ const stats = ref([
   { value: 0, label: 'For Action', icon: '!', tone: 'red' },
 ])
 
-const clearances = ref<Array<{ id: string; student: string; requirement: string; department: string; submitted: string; status: string; fileName?: string; remarks: string }>>([])
+const clearances = ref<Array<{ id: string; student: string; requirement: string; department: string; submitted: string; status: string; fileName?: string; filePath?: string; remarks: string }>>([])
 const selectedClearance = ref<(typeof clearances.value)[number] | null>(null)
 const searchQuery = ref('')
 const selectedStatus = ref('all')
@@ -53,6 +53,7 @@ async function loadClearances() {
     department: String(row.department_name || departmentNames.get(String(requirements.get(String(row.requirement_id))?.department_id)) || row.department || '—'),
     submitted: relativeDate(row.submitted_at || row.created_at),
     fileName: row.file_name ? String(row.file_name) : undefined,
+    filePath: row.file_path ? String(row.file_path) : undefined,
     remarks: String(row.remarks || ''),
     status: status(row).toLowerCase() === 'approved' ? 'Approved' : status(row).toLowerCase() === 'rejected' ? 'Rejected' : status(row).toLowerCase() === 'in review' ? 'In Review' : 'Pending',
   }))
@@ -100,7 +101,9 @@ const filteredClearances = computed(() => {
 
 const statusClasses: Record<string, string> = {
   Pending: 'bg-[#fdf1d1] text-[#d58c08]',
+  'In Review': 'bg-[#eee7ff] text-[#7c4fe0]',
   Approved: 'bg-[#daf9ea] text-[#0f9f67]',
+  Rejected: 'bg-[#ffd6d6] text-[#d93c3c]',
   'For Action': 'bg-[#ffd6d6] text-[#d93c3c]',
 }
 </script>
@@ -180,7 +183,7 @@ const statusClasses: Record<string, string> = {
             <span :class="['inline-flex rounded-full px-3 py-1 text-xs font-semibold', statusClasses[item.status] || 'bg-slate-200 text-slate-700']">{{ item.status }}</span>
           </div>
           <div class="flex justify-end">
-            <button v-if="item.status === 'Pending' || item.status === 'In Review'" class="rounded-lg bg-[#8d63e8] px-2 py-1 text-xs font-semibold text-white" @click="selectedClearance = item">Review</button>
+              <button class="rounded-lg bg-[#8d63e8] px-2 py-1 text-xs font-semibold text-white" @click="selectedClearance = item">{{ item.status === 'Pending' || item.status === 'In Review' ? 'Review' : 'View' }}</button>
           </div>
         </div>
       </div>

@@ -31,10 +31,11 @@ const loadClasses = async () => {
       return
     }
 
-    const [classesResult, requirementsResult, departmentsResult] = await Promise.all([
+    const [classesResult, requirementsResult, departmentsResult, profileResult] = await Promise.all([
       supabase.rpc('get_my_enrolled_departments'),
       fetchRows('requirements'),
       fetchRows('departments'),
+      supabase.rpc('get_my_profile'),
     ])
 
     if (requirementsResult.error) throw new Error(requirementsResult.error)
@@ -48,12 +49,12 @@ const loadClasses = async () => {
     })
 
     let classRows = (classesResult.data ?? []) as Record<string, any>[]
-    if (classesResult.error) {
+    if (classesResult.error || classRows.length === 0) {
       const fallback = await supabase
         .from('department_students')
         .select('department_id')
         .eq('student_id', (await supabase.auth.getUser()).data.user?.id || '')
-      if (fallback.error) throw classesResult.error
+      if (fallback.error && classesResult.error) throw classesResult.error
       classRows = (fallback.data ?? []).map((row) => {
         const department = departmentsResult.data.find((item) => String(item.id) === String(row.department_id))
         return {
@@ -64,6 +65,25 @@ const loadClasses = async () => {
           adviser: department?.adviser,
         }
       })
+
+      if (classRows.length === 0 && profileResult.data) {
+        const normalize = (value: unknown) => String(value || '').trim().toLowerCase().replace(/^section\s+/, '')
+        const studentGrade = normalize(profileResult.data.grade_level)
+        const studentSection = normalize(profileResult.data.section)
+        classRows = departmentsResult.data
+          .filter((department) => {
+            const grades = String(department.grade_level || '').split(',').map(normalize).filter(Boolean)
+            const sections = String(department.section || '').split(',').map(normalize).filter(Boolean)
+            return grades.includes(studentGrade) && (sections.length === 0 || sections.includes('n/a') || sections.includes(studentSection))
+          })
+          .map((department) => ({
+            department_id: department.id,
+            department_name: department.name || department.title,
+            grade_level: department.grade_level,
+            section: department.section,
+            adviser: department.adviser,
+          }))
+      }
     }
 
     classes.value = classRows.map((row) => ({
