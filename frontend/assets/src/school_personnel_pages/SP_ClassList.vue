@@ -119,7 +119,7 @@ const loadClassList = async () => {
       section: String(row.section || 'N/A'),
       departmentIds: studentDepartmentIds.get(String(row.id)) || [],
     }))
-    .sort((left, right) => left.fullName.localeCompare(right.fullName))
+    .sort((left: Student, right: Student) => left.fullName.localeCompare(right.fullName))
 
   requirements.value = requirementsResult.data.map((row) => ({
     id: String(row.id),
