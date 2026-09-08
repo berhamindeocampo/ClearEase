@@ -29,24 +29,26 @@ function saveChanges() {
 </script>
 <template>
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="emit('close')">
-		<section class="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true">
-			<div class="flex justify-between"><h2 class="text-xl font-bold">Manage Department</h2><button class="text-2xl text-slate-400" aria-label="Close" @click="emit('close')">&times;</button></div>
-			<label for="manage-department-name" class="mt-5 block text-sm font-medium text-slate-700">Department name</label>
-			<input id="manage-department-name" v-model="name" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-			<label for="manage-department-level" class="mt-4 block text-sm font-medium text-slate-700">Grade level</label>
-			<select id="manage-department-level" v-model="gradeLevels" multiple class="mt-1 h-28 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="level in levelOptions" :key="level" :value="level">{{ level }}</option></select>
-			<div v-if="gradeLevels.includes('Grade 11') || gradeLevels.includes('Grade 12')"><label for="manage-department-section" class="mt-4 block text-sm font-medium text-slate-700">Sections</label><select id="manage-department-section" v-model="sections" multiple class="mt-1 h-24 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option>STEM</option><option>GAS</option></select></div>
-			<label for="manage-department-adviser" class="mt-4 block text-sm font-medium text-slate-700">Adviser</label>
-			<select id="manage-department-adviser" v-model="adviser" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="adviserOption in props.advisers" :key="adviserOption" :value="adviserOption">{{ adviserOption }}</option></select>
-			<div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
-				<div class="flex items-center justify-between gap-3"><div><h3 class="text-sm font-bold text-slate-800">Students in this department</h3><p class="text-xs text-slate-500">{{ selectedStudentIds.length }} selected</p></div><input v-model="studentSearch" placeholder="Search students" class="w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-purple-500" /></div>
-				<div class="mt-3 max-h-52 space-y-1 overflow-y-auto pr-1">
-					<label v-for="student in filteredStudents" :key="student.id" class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-white"><input v-model="selectedStudentIds" type="checkbox" :value="student.id" class="h-4 w-4 accent-purple-600" /><span class="min-w-0"><span class="block truncate text-sm font-medium text-slate-800">{{ student.name }}</span><span class="block text-xs text-slate-500">{{ student.studentId }} · {{ student.gradeLevel }} · {{ student.section }}</span></span></label>
-					<p v-if="filteredStudents.length === 0" class="py-4 text-center text-xs text-slate-500">No students found.</p>
+		<section class="flex max-h-[calc(100vh-2rem)] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl" role="dialog" aria-modal="true">
+			<div class="flex shrink-0 items-center justify-between border-b border-slate-200 px-6 py-4"><h2 class="text-xl font-bold">Manage Department</h2><button class="text-2xl text-slate-400" aria-label="Close" @click="emit('close')">&times;</button></div>
+			<div class="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+				<label for="manage-department-name" class="block text-sm font-medium text-slate-700">Department name</label>
+				<input id="manage-department-name" v-model="name" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+				<label for="manage-department-level" class="mt-4 block text-sm font-medium text-slate-700">Grade level</label>
+				<select id="manage-department-level" v-model="gradeLevels" multiple class="mt-1 h-24 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="level in levelOptions" :key="level" :value="level">{{ level }}</option></select>
+				<div v-if="gradeLevels.includes('Grade 11') || gradeLevels.includes('Grade 12')"><label for="manage-department-section" class="mt-4 block text-sm font-medium text-slate-700">Sections</label><select id="manage-department-section" v-model="sections" multiple class="mt-1 h-20 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option>STEM</option><option>GAS</option></select></div>
+				<label for="manage-department-adviser" class="mt-4 block text-sm font-medium text-slate-700">Adviser</label>
+				<select id="manage-department-adviser" v-model="adviser" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="adviserOption in props.advisers" :key="adviserOption" :value="adviserOption">{{ adviserOption }}</option></select>
+				<div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
+					<div class="flex items-center justify-between gap-3"><div><h3 class="text-sm font-bold text-slate-800">Students in this department</h3><p class="text-xs text-slate-500">{{ selectedStudentIds.length }} selected</p></div><input v-model="studentSearch" placeholder="Search students" class="min-w-0 w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-purple-500" /></div>
+					<div class="mt-3 max-h-48 space-y-1 overflow-y-auto pr-1">
+						<label v-for="student in filteredStudents" :key="student.id" class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-white"><input v-model="selectedStudentIds" type="checkbox" :value="student.id" class="h-4 w-4 accent-purple-600" /><span class="min-w-0"><span class="block truncate text-sm font-medium text-slate-800">{{ student.name }}</span><span class="block text-xs text-slate-500">{{ student.studentId }} · {{ student.gradeLevel }} · {{ student.section }}</span></span></label>
+						<p v-if="filteredStudents.length === 0" class="py-4 text-center text-xs text-slate-500">No students found.</p>
+					</div>
 				</div>
+				<p v-if="props.saveError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{{ props.saveError }}</p>
 			</div>
-			<p v-if="props.saveError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{{ props.saveError }}</p>
-			<div class="mt-6 flex gap-3"><button class="flex-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600" @click="confirmDelete">Delete</button><button class="flex-1 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white" @click="saveChanges">Save</button></div>
+			<div class="flex shrink-0 gap-3 border-t border-slate-200 bg-white px-6 py-4"><button class="flex-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600" @click="confirmDelete">Delete</button><button class="flex-1 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white" @click="saveChanges">Save</button></div>
 		</section>
 	</div>
 </template>

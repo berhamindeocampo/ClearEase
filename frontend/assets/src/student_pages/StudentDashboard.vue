@@ -13,6 +13,7 @@ interface Activity {
   status: 'Approved' | 'Pending' | 'Rejected'
   type: 'approved' | 'pending' | 'rejected'
   date: string
+  timestamp: number
 }
 
 const studentName = ref('Student')
@@ -76,14 +77,19 @@ async function loadActivities() {
   const currentUser = await getCurrentUser()
   const submissionRows = (submissionsResult.data ?? []) as Record<string, any>[]
   const submissions = submissionRows.filter((row: Record<string, unknown>) => !currentUser || String(row.student_id) === String(currentUser.id))
-  const statuses = submissions.map((row) => String(row.status || 'pending').toLowerCase())
-  requirementsTotal.value = submissions.length
+  const sortedSubmissions = [...submissions].sort((left, right) => {
+    const leftTime = new Date(String(left.updated_at || left.created_at || 0)).getTime()
+    const rightTime = new Date(String(right.updated_at || right.created_at || 0)).getTime()
+    return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime)
+  })
+  const statuses = sortedSubmissions.map((row) => String(row.status || 'pending').toLowerCase())
+  requirementsTotal.value = sortedSubmissions.length
   requirementsCompleted.value = statuses.filter((status) => ['approved', 'completed', 'cleared'].includes(status)).length
   requirementsRejected.value = statuses.filter((status) => ['rejected', 'for action'].includes(status)).length
   requirementsPending.value = Math.max(requirementsTotal.value - requirementsCompleted.value - requirementsRejected.value, 0)
   clearanceProgress.value = requirementsTotal.value ? Math.round((requirementsCompleted.value / requirementsTotal.value) * 100) : 0
-  lastUpdated.value = displayDate(submissions[0]?.updated_at || submissions[0]?.created_at)
-  const deadline = submissions
+  lastUpdated.value = displayDate(sortedSubmissions[0]?.updated_at || sortedSubmissions[0]?.created_at)
+  const deadline = sortedSubmissions
     .map((row) => row.deadline)
     .filter(Boolean)
     .map((value) => new Date(String(value)).getTime())
@@ -94,9 +100,10 @@ async function loadActivities() {
   const result = await fetchRows('activity_logs')
   if (result.error || (result.data.length === 0 && submissions.length > 0)) {
     activityError.value = result.error || ''
-    recentActivities.value = submissions.slice(0, 5).map((row, index) => {
+    recentActivities.value = sortedSubmissions.slice(0, 5).map((row, index) => {
       const rawStatus = String(row.status || 'pending').toLowerCase()
       const status = rawStatus === 'approved' ? 'Approved' : rawStatus === 'rejected' ? 'Rejected' : 'Pending'
+      const timestamp = new Date(String(row.updated_at || row.created_at || 0)).getTime()
       return {
         id: row.id || index,
         title: String(row.remarks || row.title || row.requirement_name || 'Clearance update'),
@@ -104,13 +111,20 @@ async function loadActivities() {
         status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
         type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
         date: displayDate(row.updated_at || row.created_at),
+        timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
       }
     })
     return
   }
 
-  recentActivities.value = result.data.slice(0, 5).map((row, index) => {
+  const sortedActivities = [...result.data].sort((left, right) => {
+    const leftTime = new Date(String(left.created_at || left.updated_at || 0)).getTime()
+    const rightTime = new Date(String(right.created_at || right.updated_at || 0)).getTime()
+    return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime)
+  })
+  recentActivities.value = sortedActivities.slice(0, 5).map((row, index) => {
     const status = String(row.status || 'Pending')
+    const timestamp = new Date(String(row.created_at || row.updated_at || 0)).getTime()
     return {
       id: row.id || index,
       title: String(row.title || row.description || 'Activity update'),
@@ -118,6 +132,7 @@ async function loadActivities() {
       status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
       type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
       date: displayDate(row.created_at),
+      timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
     }
   })
 }
