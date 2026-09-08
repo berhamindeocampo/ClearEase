@@ -73,35 +73,60 @@ onMounted(async () => {
 const recentActivities = ref<Activity[]>([])
 
 async function loadActivities() {
-  const [submissionsResult, requirementsResult, departmentsResult] = await Promise.all([
+  const [submissionsResult, requirementsResult, departmentsResult, profileResult, classAssignmentsResult, studentAssignmentsResult, enrolledDepartmentsResult] = await Promise.all([
     supabase
       ? supabase.rpc('get_my_clearance_submissions')
       : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
     fetchRows('requirements'),
     fetchRows('departments'),
+    supabase ? supabase.rpc('get_my_profile') : Promise.resolve({ data: null, error: null }),
+    supabase ? supabase.from('class_requirements').select('requirement_id, grade_level, section') : Promise.resolve({ data: [], error: null }),
+    supabase ? supabase.rpc('get_my_student_requirements') : Promise.resolve({ data: [], error: null }),
+    supabase
+      ? supabase.from('department_students').select('department_id').eq('student_id', (await supabase.auth.getUser()).data.user?.id || '')
+      : Promise.resolve({ data: [], error: null }),
   ])
   const currentUser = await getCurrentUser()
   const submissionRows = (submissionsResult.data ?? []) as Record<string, any>[]
   const submissions = submissionRows.filter((row: Record<string, unknown>) => !currentUser || String(row.student_id) === String(currentUser.id))
+  const profile = profileResult.data as Record<string, any> | null
+  const gradeLevel = String(profile?.grade_level || '').trim()
+  const section = String(profile?.section || '').trim()
+  const hasClassProfile = ['Grade 11', 'Grade 12'].includes(gradeLevel) && ['STEM', 'GAS'].includes(section)
+  const classAssignments = (classAssignmentsResult.data ?? []) as Record<string, any>[]
+  const studentAssignments = new Set(((studentAssignmentsResult.data ?? []) as Record<string, any>[]).map((row) => String(row.requirement_id)))
+  const enrolledDepartmentIds = new Set(((enrolledDepartmentsResult.data ?? []) as Record<string, any>[]).map((row) => String(row.department_id)))
+  const assignedRequirementIds = new Set<string>()
+  if (hasClassProfile) {
+    classAssignments
+      .filter((row) => String(row.grade_level || '').trim() === gradeLevel && String(row.section || '').trim() === section)
+      .forEach((row) => assignedRequirementIds.add(String(row.requirement_id)))
+    studentAssignments.forEach((id) => assignedRequirementIds.add(id))
+    submissions.forEach((row) => assignedRequirementIds.add(String(row.requirement_id)))
+  }
+  const assignedRequirements = requirementsResult.data.filter((requirement) =>
+    hasClassProfile && (assignedRequirementIds.has(String(requirement.id)) || enrolledDepartmentIds.has(String(requirement.department_id))))
+  const assignedRequirementIdsSet = new Set(assignedRequirements.map((requirement) => String(requirement.id)))
+  const relevantSubmissions = submissions.filter((row) => assignedRequirementIdsSet.has(String(row.requirement_id)))
   const departmentNames = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.name || department.title || 'Subject')]))
   const subjectNames = new Map(requirementsResult.data.map((requirement) => [
     String(requirement.id),
     departmentNames.get(String(requirement.department_id)) || String(requirement.department_name || requirement.department || 'Subject'),
   ]))
   const subjectFor = (row: Record<string, any>) => subjectNames.get(String(row.requirement_id)) || String(row.department_name || row.department || row.title || row.requirement_name || 'Subject')
-  const sortedSubmissions = [...submissions].sort((left, right) => {
+  const sortedSubmissions = [...relevantSubmissions].sort((left, right) => {
     const leftTime = new Date(String(left.updated_at || left.created_at || 0)).getTime()
     const rightTime = new Date(String(right.updated_at || right.created_at || 0)).getTime()
     return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime)
   })
   const statuses = sortedSubmissions.map((row) => String(row.status || 'pending').toLowerCase())
-  requirementsTotal.value = sortedSubmissions.length
+  requirementsTotal.value = assignedRequirements.length
   requirementsCompleted.value = statuses.filter((status) => ['approved', 'completed', 'cleared'].includes(status)).length
   requirementsRejected.value = statuses.filter((status) => ['rejected', 'for action'].includes(status)).length
   requirementsPending.value = Math.max(requirementsTotal.value - requirementsCompleted.value - requirementsRejected.value, 0)
   clearanceProgress.value = requirementsTotal.value ? Math.round((requirementsCompleted.value / requirementsTotal.value) * 100) : 0
   lastUpdated.value = displayDate(sortedSubmissions[0]?.updated_at || sortedSubmissions[0]?.created_at)
-  const deadline = sortedSubmissions
+  const deadline = assignedRequirements
     .map((row) => row.deadline)
     .filter(Boolean)
     .map((value) => new Date(String(value)).getTime())
@@ -110,7 +135,7 @@ async function loadActivities() {
   daysRemaining.value = deadline ? Math.max(0, Math.ceil((deadline - Date.now()) / 86400000)) : 0
 
   const result = await fetchRows('activity_logs')
-  if (result.error || (result.data.length === 0 && submissions.length > 0)) {
+  if (result.error || (result.data.length === 0 && relevantSubmissions.length > 0)) {
     activityError.value = result.error || ''
     recentActivities.value = sortedSubmissions.slice(0, 5).map((row, index) => {
       const rawStatus = String(row.status || 'pending').toLowerCase()

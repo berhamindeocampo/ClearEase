@@ -82,6 +82,19 @@ async function updateRequirement(form: RequirementForm) {
   await loadRequirements()
 }
 
+async function deleteRequirement(requirement: (typeof requirements.value)[number]) {
+  if (!supabase || !window.confirm(`Delete the requirement "${requirement.name}"? This may also remove related submissions.`)) return
+
+  const { error } = await supabase.from('requirements').delete().eq('id', requirement.id)
+  if (error) {
+    loadError.value = error.message
+    return
+  }
+
+  if (selectedRequirement.value?.id === requirement.id) selectedRequirement.value = null
+  await loadRequirements()
+}
+
 async function loadRequirements() {
   const [result, departmentsResult, assignmentsResult, profileResult] = await Promise.all([
     fetchRows('requirements'),
@@ -186,9 +199,12 @@ onMounted(loadRequirements)
           <div>{{ item.requiredDocument }}</div>
           <div>{{ item.instruction }}</div>
           <div>{{ item.deadline }}</div>
-          <div class="text-right">
+          <div class="flex justify-end gap-2">
             <button class="bg-[#8d63e8] text-white rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="selectedRequirement = item; activePopup = 'edit'">
               Edit
+            </button>
+            <button class="rounded-lg border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 sm:px-3 sm:py-1.5 sm:text-sm" @click="deleteRequirement(item)">
+              Delete
             </button>
           </div>
         </div>
