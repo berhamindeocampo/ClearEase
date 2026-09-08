@@ -11,10 +11,28 @@ create table if not exists public.department_students (
 
 alter table public.department_students enable row level security;
 
+create or replace function public.is_admin_user()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where role = 'admin'
+      and (id = auth.uid() or lower(email) = lower(coalesce(auth.email(), '')))
+  );
+$$;
+
+revoke execute on function public.is_admin_user() from public;
+grant execute on function public.is_admin_user() to authenticated;
+
 drop policy if exists "department_students_read_authenticated" on public.department_students;
 create policy "department_students_read_authenticated"
 on public.department_students for select to authenticated
-using (student_id = auth.uid() or public.current_role() in ('admin', 'school_personnel'));
+using (student_id = auth.uid() or public.is_admin_user() or public.current_role() = 'school_personnel');
 
 drop policy if exists "department_students_admin_manage" on public.department_students;
 drop policy if exists "department_students_admin_insert" on public.department_students;
@@ -22,29 +40,13 @@ drop policy if exists "department_students_admin_update" on public.department_st
 drop policy if exists "department_students_admin_delete" on public.department_students;
 create policy "department_students_admin_insert"
 on public.department_students for insert to authenticated
-with check (exists (
-  select 1 from public.profiles
-  where role = 'admin'
-    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
-));
+with check (public.is_admin_user());
 create policy "department_students_admin_update"
 on public.department_students for update to authenticated
-using (exists (
-  select 1 from public.profiles
-  where role = 'admin'
-    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
-))
-with check (exists (
-  select 1 from public.profiles
-  where role = 'admin'
-    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
-));
+using (public.is_admin_user())
+with check (public.is_admin_user());
 create policy "department_students_admin_delete"
 on public.department_students for delete to authenticated
-using (exists (
-  select 1 from public.profiles
-  where role = 'admin'
-    and (id = auth.uid() or lower(email) = lower((select email from auth.users where id = auth.uid())))
-));
+using (public.is_admin_user());
 
 notify pgrst, 'reload schema';
