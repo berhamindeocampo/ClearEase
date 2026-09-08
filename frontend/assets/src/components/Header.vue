@@ -49,15 +49,16 @@ a {
             />
           </router-link>
 
-          <nav class="hidden md:flex items-center gap-3 flex-1">
+          <nav class="segmented-control hidden md:flex items-center gap-3 flex-1">
             <router-link
               v-for="item in navItems"
               :key="item.id"
               :to="item.path"
+              :aria-current="isActive(item.path) ? 'page' : undefined"
               :class="[
-                'px-5 py-2.5 rounded-xl text-base font-semibold transition-all duration-200',
+                'px-5 py-2.5 rounded-xl text-base font-semibold transition-all duration-300',
                 isActive(item.path)
-                  ? 'bg-purple-600 text-white shadow-sm'
+                  ? 'text-white shadow-sm'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
               ]"
             >
@@ -90,16 +91,17 @@ a {
         leave-from-class="opacity-100 translate-y-0"
         leave-to-class="opacity-0 -translate-y-2"
       >
-        <nav v-if="isMobileMenuOpen" class="md:hidden mt-4 pt-4 border-t border-slate-200 flex flex-col gap-2">
+        <nav v-if="isMobileMenuOpen" class="segmented-control md:hidden mt-4 pt-4 border-t border-slate-200 flex flex-col gap-2">
           <router-link
             v-for="item in navItems"
             :key="item.id"
             :to="item.path"
             @click="isMobileMenuOpen = false"
-            :class="[
-              'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200',
+              :aria-current="isActive(item.path) ? 'page' : undefined"
+              :class="[
+              'px-4 py-2 rounded-lg font-medium text-sm transition-all duration-300',
               isActive(item.path)
-                ? 'bg-purple-600 text-white'
+                ? 'text-white'
                 : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
             ]"
           >

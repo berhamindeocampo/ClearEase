@@ -174,7 +174,7 @@ button {
     </div>
 
     <div class="grid gap-6 md:grid-cols-3">
-      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="dashboard-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" style="animation-delay: 80ms">
         <p class="text-sm text-slate-500">Clearance Progress</p>
         <div class="mt-3 flex items-end justify-between">
           <h2 class="text-3xl font-bold text-slate-900">{{ clearanceProgress }}%</h2>
@@ -185,20 +185,20 @@ button {
         </div>
       </div>
 
-      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="dashboard-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" style="animation-delay: 150ms">
         <p class="text-sm text-slate-500">Requirements</p>
         <h2 class="mt-3 text-3xl font-bold text-slate-900">{{ requirementsCompleted }}/{{ requirementsTotal }}</h2>
         <p class="mt-2 text-sm text-slate-600">{{ requirementsPending }} pending • {{ requirementsRejected }} rejected</p>
       </div>
 
-      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
+      <div class="dashboard-card bg-white rounded-2xl border border-slate-200 p-5 shadow-sm" style="animation-delay: 220ms">
         <p class="text-sm text-slate-500">Days Remaining</p>
         <h2 class="mt-3 text-3xl font-bold text-slate-900">{{ daysRemaining }}</h2>
         <p class="mt-2 text-sm text-slate-600">Last updated {{ lastUpdated }}</p>
       </div>
     </div>
 
-    <div class="mt-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="dashboard-card mt-8 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden" style="animation-delay: 290ms">
       <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <h3 class="text-lg font-semibold text-slate-900">Recent Activity</h3>
         <button @click="viewAllActivity" class="text-sm font-medium text-purple-600 hover:text-purple-700">

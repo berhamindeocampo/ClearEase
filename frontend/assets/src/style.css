@@ -1,1 +1,162 @@
-@import "tailwindcss"
+@import "tailwindcss";
+
+:root {
+    --clearease-ink: #17233f;
+    --clearease-purple: #7c3aed;
+    --clearease-blue: #2563eb;
+    --clearease-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    color: var(--clearease-ink);
+    background: #f5f7fb;
+    font-family: 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+    transition-duration: 240ms;
+    transition-timing-function: var(--clearease-ease);
+}
+
+button,
+a {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.page-transition-enter-active,
+.page-transition-leave-active {
+    transition: opacity 320ms var(--clearease-ease), transform 420ms var(--clearease-ease);
+}
+
+.page-transition-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.page-transition-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.auth-shell {
+    background:
+        radial-gradient(circle at 12% 18%, rgba(6, 182, 212, 0.2), transparent 28%),
+        radial-gradient(circle at 88% 84%, rgba(124, 58, 237, 0.22), transparent 30%),
+        linear-gradient(135deg, #f5f7ff 0%, #eefbfc 100%);
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 24px 70px rgba(47, 39, 88, 0.14);
+    backdrop-filter: blur(18px);
+    animation: card-rise 700ms var(--clearease-ease) both;
+}
+
+.auth-input {
+    border-color: #d7d9ef;
+    box-shadow: 0 1px 0 rgba(23, 35, 63, 0.02);
+}
+
+.auth-input:hover {
+    border-color: #a5b4fc;
+}
+
+.auth-input:focus {
+    border-color: var(--clearease-purple);
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.12), 0 8px 20px rgba(124, 58, 237, 0.08);
+}
+
+.brand-button {
+    background: linear-gradient(110deg, var(--clearease-purple), var(--clearease-blue));
+    box-shadow: 0 12px 24px rgba(79, 70, 229, 0.22);
+}
+
+.brand-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px rgba(79, 70, 229, 0.3);
+}
+
+.brand-button:active:not(:disabled) {
+    transform: translateY(0) scale(0.985);
+}
+
+.segmented-control a {
+    position: relative;
+    isolation: isolate;
+}
+
+.segmented-control a::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(110deg, var(--clearease-purple), var(--clearease-blue));
+    content: '';
+    opacity: 0;
+    transform: scale(0.86);
+    transition: opacity 240ms var(--clearease-ease), transform 320ms var(--clearease-ease);
+}
+
+.segmented-control a[aria-current='page']::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.dashboard-card {
+    animation: content-rise 650ms var(--clearease-ease) both;
+    transition: transform 260ms var(--clearease-ease), box-shadow 260ms var(--clearease-ease), border-color 260ms var(--clearease-ease);
+}
+
+.dashboard-card:hover {
+    border-color: #c4b5fd;
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px rgba(65, 60, 120, 0.1);
+}
+
+@keyframes card-rise {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes content-rise {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

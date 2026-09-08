@@ -98,7 +98,7 @@ const handleSignUp = async (): Promise<void> => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-4">
+  <div class="auth-shell min-h-screen flex items-center justify-center px-4 py-4">
     <div class="w-full max-w-[820px]">
       <div class="flex justify-center mb-3">
         <img
@@ -108,7 +108,7 @@ const handleSignUp = async (): Promise<void> => {
         />
       </div>
 
-      <div class="relative mx-auto w-full max-w-[440px] rounded-[22px] bg-white/90 p-5 shadow-[0_18px_40px_rgba(56,34,75,0.12)] md:p-6">
+      <div class="auth-card relative mx-auto w-full max-w-[440px] rounded-[22px] p-5 md:p-6">
         <button
           type="button"
           @click="goBack"
@@ -143,7 +143,7 @@ const handleSignUp = async (): Promise<void> => {
               type="email"
               placeholder="Enter your email"
               required
-              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-purple-500"
+              class="auth-input w-full rounded-lg border-2 bg-white/80 px-3 py-2 text-sm text-gray-800 outline-none"
             />
             <span v-if="errors.email" class="mt-1 block text-xs text-red-500">
               {{ errors.email }}
@@ -159,7 +159,7 @@ const handleSignUp = async (): Promise<void> => {
               type="text"
               placeholder="Enter your full name"
               required
-              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-purple-500"
+              class="auth-input w-full rounded-lg border-2 bg-white/80 px-3 py-2 text-sm text-gray-800 outline-none"
             />
           </div>
 
@@ -172,7 +172,7 @@ const handleSignUp = async (): Promise<void> => {
               type="text"
               placeholder="Enter your student ID"
               required
-              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 text-sm text-gray-800 outline-none transition focus:border-purple-500"
+              class="auth-input w-full rounded-lg border-2 bg-white/80 px-3 py-2 text-sm text-gray-800 outline-none"
             />
           </div>
 
@@ -186,7 +186,7 @@ const handleSignUp = async (): Promise<void> => {
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Create a password"
                 required
-                class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2 pr-10 text-sm text-gray-800 outline-none transition focus:border-purple-500"
+                class="auth-input w-full rounded-lg border-2 bg-white/80 px-3 py-2 pr-10 text-sm text-gray-800 outline-none"
               />
               <button
                 type="button"
@@ -242,7 +242,7 @@ const handleSignUp = async (): Promise<void> => {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full rounded-xl bg-[#7a4ed6] py-2.5 text-base font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
+            class="brand-button w-full rounded-xl py-2.5 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-80"
           >
             <span v-if="isLoading">Signing Up...</span>
             <span v-else>Sign Up</span>

@@ -1,7 +1,6 @@
-import { createClient } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase'
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+export { supabase }
 
 const LOCAL_SESSION_KEY = 'clearease-local-session'
 const LEGACY_USER_NAME_KEY = 'clearease-user-name'
@@ -28,8 +27,6 @@ const clearLocalSession = () => {
   if (typeof window === 'undefined') return
   localStorage.removeItem(LOCAL_SESSION_KEY)
 }
-
-export const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 
 export interface SignUpData {
   email: string
@@ -60,18 +57,16 @@ export const useAuth = () => {
       }
     }
 
-    const { data: inserted, error } = await supabase
-      .from('users')
-      .insert([
-        {
-          email: data.email,
-          password: data.password,
+    const { data: registered, error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
           full_name: data.fullName,
           student_id: data.studentId,
-          created_at: new Date().toISOString(),
         },
-      ])
-      .select()
+      },
+    })
 
     if (error) {
       throw error
@@ -83,7 +78,7 @@ export const useAuth = () => {
       studentId: data.studentId,
     })
 
-    return { user: { id: inserted?.[0]?.id ?? 'supabase-user', email: data.email } }
+    return { user: { id: registered.user?.id ?? 'supabase-user', email: data.email } }
   }
 
   const logIn = async (email: string, password: string) => {
@@ -103,31 +98,29 @@ export const useAuth = () => {
       throw new Error('Invalid login credentials')
     }
 
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle()
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
     if (error) {
       throw error
     }
 
-    if (!data) {
+    if (!data.user) {
       throw new Error('Invalid login credentials')
     }
 
     saveLocalSession({
-      email: data.email,
-      fullName: data.full_name,
-      studentId: data.student_id,
+      email: data.user.email ?? email,
+      fullName: data.user.user_metadata?.full_name ?? '',
+      studentId: data.user.user_metadata?.student_id ?? '',
     })
 
     return {
       user: {
-        id: data.id,
-        email: data.email,
+        id: data.user.id,
+        email: data.user.email ?? email,
       },
     }
   }

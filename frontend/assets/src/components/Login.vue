@@ -64,7 +64,7 @@ const handleLogIn = async (): Promise<void> => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-8">
+  <div class="auth-shell min-h-screen flex items-center justify-center px-4 py-8">
     <div class="w-full max-w-[980px]">
       <div class="flex justify-center mb-6">
         <img
@@ -74,7 +74,7 @@ const handleLogIn = async (): Promise<void> => {
         />
       </div>
 
-      <div class="mx-auto w-full max-w-[520px] rounded-[28px] bg-white/90 p-6 shadow-[0_18px_40px_rgba(56,34,75,0.12)] md:p-8">
+      <div class="auth-card mx-auto w-full max-w-[520px] rounded-[28px] p-6 md:p-8">
         <div class="flex justify-center mb-6">
           <img
             :src="cleareaseLogo"
@@ -98,7 +98,7 @@ const handleLogIn = async (): Promise<void> => {
               type="email"
               placeholder="Enter your email or username"
               required
-              class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 text-base text-gray-800 outline-none transition focus:border-purple-500"
+              class="auth-input w-full rounded-xl border-2 bg-white/80 px-4 py-3 text-base text-gray-800 outline-none"
             />
             <span v-if="errors.email" class="mt-1 block text-xs text-red-500">
               {{ errors.email }}
@@ -115,7 +115,7 @@ const handleLogIn = async (): Promise<void> => {
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Enter your password"
                 required
-                class="w-full rounded-xl border-2 border-purple-300 bg-white px-4 py-3 pr-12 text-base text-gray-800 outline-none transition focus:border-purple-500"
+                class="auth-input w-full rounded-xl border-2 bg-white/80 px-4 py-3 pr-12 text-base text-gray-800 outline-none"
               />
               <button
                 type="button"
@@ -158,7 +158,7 @@ const handleLogIn = async (): Promise<void> => {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full rounded-2xl bg-[#7a4ed6] py-3 text-xl font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
+            class="brand-button w-full rounded-2xl py-3 text-xl font-bold text-white disabled:cursor-not-allowed disabled:opacity-80"
           >
             <span v-if="isLoading">Logging in...</span>
             <span v-else>Log In</span>

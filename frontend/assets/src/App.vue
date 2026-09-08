@@ -1,8 +1,12 @@
 <template>
   <div id="app" class="min-h-screen bg-slate-50">
     <Header v-if="showHeader" />
-    <main>
-      <router-view />
+    <main class="overflow-hidden">
+      <router-view v-slot="{ Component, route: currentRoute }">
+        <transition name="page-transition" mode="out-in">
+          <component :is="Component" :key="currentRoute.fullPath" />
+        </transition>
+      </router-view>
     </main>
   </div>
 </template>
@@ -18,8 +22,3 @@ const hideHeaderRoutes = ['login', 'signin']
 const showHeader = computed(() => !isLandingPage.value && !hideHeaderRoutes.includes(String(route.name)))
 </script>
 
-<style>
-#app {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-}
-</style>
