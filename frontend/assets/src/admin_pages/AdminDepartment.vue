@@ -12,6 +12,7 @@ const isLoading = ref(true)
 const loadError = ref('')
 const activePopup = ref<'add' | 'manage' | null>(null)
 const selectedDepartment = ref<(typeof departments.value)[number] | null>(null)
+const adviserOptions = ref(['N/A'])
 
 async function addDepartment(form: { name: string; adviser: string }) {
   if (!supabase) {
@@ -46,18 +47,41 @@ async function deleteDepartment(departmentId: string) {
   await loadDepartments()
 }
 
+async function updateDepartment(departmentId: string, name: string, adviser: string) {
+  if (!supabase) {
+    loadError.value = 'Supabase is not configured.'
+    return
+  }
+
+  const { error } = await supabase.from('departments').update({ name, adviser }).eq('id', departmentId)
+  if (error) {
+    loadError.value = error.message
+    return
+  }
+
+  activePopup.value = null
+  selectedDepartment.value = null
+  await loadDepartments()
+}
+
 async function loadDepartments() {
-  const [departmentResult, requirementResult] = await Promise.all([
+  const [departmentResult, requirementResult, profilesResult] = await Promise.all([
     fetchRows('departments'),
     fetchRows('requirements'),
+    fetchRows('profiles'),
   ])
-  loadError.value = departmentResult.error || requirementResult.error || ''
+  loadError.value = departmentResult.error || requirementResult.error || profilesResult.error || ''
+  const personnelNames = profilesResult.data
+    .filter((profile) => String(profile.role || '').trim().toLowerCase() === 'school_personnel')
+    .map((profile) => String(profile.full_name || profile.fullName || profile.name || profile.email || '').trim())
+    .filter(Boolean)
+  adviserOptions.value = ['N/A', ...Array.from(new Set(personnelNames))]
   departments.value = departmentResult.data.map((department) => {
     const id = department.id
     return {
       id: String(id),
       name: String(department.name || department.title || id),
-      adviser: String(department.adviser || '—'),
+      adviser: String(department.adviser || '').trim() || 'N/A',
       requirement: String(requirementResult.data.find((item) => item.department_id === id)?.title || '—'),
       action: 'Manage',
     }
@@ -88,20 +112,18 @@ onMounted(loadDepartments)
           <h2 class="text-lg sm:text-xl font-black text-slate-900">Departments</h2>
         </div>
 
-        <div class="grid grid-cols-[1.1fr_1.2fr_1.5fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
+        <div class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <div>Department</div>
           <div>Adviser</div>
-          <div>Requirements needed</div>
           <div class="text-right">Action</div>
         </div>
 
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading departments...</div>
         <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
         <div v-else-if="departments.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No departments found.</div>
-        <div v-for="dept in departments.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))" v-else :key="dept.name" class="grid grid-cols-[1.1fr_1.2fr_1.5fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+        <div v-for="dept in departments.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))" v-else :key="dept.name" class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ dept.name }}</div>
           <div>{{ dept.adviser }}</div>
-          <div>{{ dept.requirement }}</div>
           <div class="text-right">
             <button class="bg-[#8d63e8] text-white rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="selectedDepartment = dept; activePopup = 'manage'">
               {{ dept.action }}
@@ -110,7 +132,7 @@ onMounted(loadDepartments)
         </div>
       </div>
     </main>
-    <AdminAddDepartmentPopup v-if="activePopup === 'add'" @close="activePopup = null" @save="addDepartment" />
-    <AdminManagePopup v-if="activePopup === 'manage' && selectedDepartment" :department="selectedDepartment" @close="activePopup = null; selectedDepartment = null" @delete="deleteDepartment" />
+    <AdminAddDepartmentPopup v-if="activePopup === 'add'" :advisers="adviserOptions" @close="activePopup = null" @save="addDepartment" />
+    <AdminManagePopup v-if="activePopup === 'manage' && selectedDepartment" :department="selectedDepartment" :advisers="adviserOptions" @close="activePopup = null; selectedDepartment = null" @delete="deleteDepartment" @save="updateDepartment" />
   </div>
 </template>
