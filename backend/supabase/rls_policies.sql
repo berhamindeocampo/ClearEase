@@ -161,6 +161,9 @@ alter table if exists public.departments
 update public.departments
 set grade_level = 'Others'
 where grade_level is null or trim(grade_level) = '';
+
+update public.departments
+set grade_level = 'Grade 7';
 alter table public.departments enable row level security;
 alter table public.requirements enable row level security;
 alter table public.clearance_submissions enable row level security;

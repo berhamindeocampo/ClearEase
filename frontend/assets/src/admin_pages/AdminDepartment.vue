@@ -34,13 +34,20 @@ async function addDepartment(form: { name: string; adviser: string; gradeLevels:
     return
   }
 
+  const departmentName = form.name.trim()
+  const existingDepartment = departments.value.find((department) => department.name.trim().toLowerCase() === departmentName.toLowerCase())
+  if (existingDepartment) {
+    loadError.value = `The department "${departmentName}" already exists. Use Manage to edit it or choose a different name.`
+    return
+  }
+
   const { data: createdDepartment, error } = await supabase
     .from('departments')
-    .insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevels.join(', '), section: form.section })
+    .insert({ name: departmentName, adviser: form.adviser.trim(), grade_level: form.gradeLevels.join(', '), section: form.section })
     .select('id')
     .single()
   if (error) {
-    loadError.value = error.message
+    loadError.value = error.code === '23505' ? `The department "${departmentName}" already exists. Use Manage to edit it or choose a different name.` : error.message
     return
   }
 
@@ -180,7 +187,7 @@ async function loadDepartments() {
       id: String(id),
       name: String(department.name || department.title || id),
       adviser: String(department.adviser || '').trim() || 'N/A',
-      gradeLevel: String(department.grade_level || 'Others'),
+      gradeLevel: String(department.grade_level || 'Grade 7').trim() === 'Others' ? 'Grade 7' : String(department.grade_level || 'Grade 7').trim(),
       section: String(department.section || 'N/A'),
       requirement: departmentRequirements[0] || '—',
       requirements: departmentRequirements,
@@ -236,6 +243,9 @@ onMounted(loadDepartments)
           <div class="font-semibold text-slate-950">{{ dept.name }}</div>
           <div class="font-medium text-slate-900">{{ dept.adviser }}</div>
           <div class="text-right">
+            <button class="mr-2 rounded-lg border border-[#8d63e8] px-2 py-1 text-xs font-semibold text-[#7c4fe0] hover:bg-[#f3edff]" @click.stop="selectedDepartmentDetail = dept">
+              List
+            </button>
             <button class="bg-[#8d63e8] text-white rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click.stop="selectedDepartment = dept; activePopup = 'manage'">
               {{ dept.action }}
             </button>
@@ -250,7 +260,7 @@ onMounted(loadDepartments)
       <section class="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="department-detail-title">
         <div class="flex items-start justify-between gap-4">
           <div>
-            <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#7c4fe0]">Subject details</p>
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-[#7c4fe0]">Student List</p>
             <h2 id="department-detail-title" class="mt-1 text-2xl font-black text-slate-950">{{ selectedDepartmentDetail.name }}</h2>
           </div>
           <button class="text-2xl font-semibold text-slate-400 hover:text-slate-700" aria-label="Close" @click="selectedDepartmentDetail = null">&times;</button>
