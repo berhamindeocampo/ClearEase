@@ -44,8 +44,38 @@ async function loadClearances() {
   const profiles = new Map(profilesResult.data.map((profile) => [String(profile.id), profile]))
   const requirements = new Map(requirementsResult.data.map((requirement) => [String(requirement.id), requirement]))
   // The RPC already scopes rows to this personnel's assigned departments.
-  const visibleRows = rows
+  const visibleRows = [...rows]
   const departmentNames = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.name || department.title || department.id)]))
+  const submittedKeys = new Set(rows.map((row) => `${String(row.student_id)}:${String(row.requirement_id)}`))
+  const normalize = (value: unknown) => String(value || '').trim().toLowerCase().replace(/^section\s+/, '')
+  const assignedDepartments = departmentsResult.data.filter((department) => assignedDepartmentIds.has(String(department.id)))
+  profilesResult.data
+    .filter((profile) => String(profile.role || '').trim().toLowerCase() === 'student')
+    .forEach((profile) => {
+      const studentGrade = normalize(profile.grade_level)
+      const studentSection = normalize(profile.section)
+      assignedDepartments.forEach((department) => {
+        const grades = String(department.grade_level || '').split(',').map(normalize).filter(Boolean)
+        const sections = String(department.section || '').split(',').map(normalize).filter(Boolean)
+        if (!grades.includes(studentGrade) || (sections.length > 0 && !sections.includes('n/a') && !sections.includes(studentSection))) return
+        requirementsResult.data
+          .filter((requirement) => String(requirement.department_id) === String(department.id))
+          .forEach((requirement) => {
+            const key = `${String(profile.id)}:${String(requirement.id)}`
+            if (!submittedKeys.has(key)) {
+              visibleRows.push({
+                id: `missing-${profile.id}-${requirement.id}`,
+                student_id: profile.id,
+                requirement_id: requirement.id,
+                student_name: profile.full_name || profile.email,
+                requirement_name: requirement.title || requirement.name,
+                department_name: department.name || department.title,
+                status: 'missing',
+              })
+            }
+          })
+      })
+    })
   clearances.value = visibleRows.map((row) => ({
     id: String(row.id),
     student: String(row.student_name || profiles.get(String(row.student_id))?.full_name || profiles.get(String(row.student_id))?.email || row.full_name || row.student_id || 'Unknown student'),
@@ -55,14 +85,14 @@ async function loadClearances() {
     fileName: row.file_name ? String(row.file_name) : undefined,
     filePath: row.file_path ? String(row.file_path) : undefined,
     remarks: String(row.remarks || ''),
-    status: status(row).toLowerCase() === 'approved' ? 'Approved' : status(row).toLowerCase() === 'rejected' ? 'Rejected' : status(row).toLowerCase() === 'in review' ? 'In Review' : 'Pending',
+    status: status(row).toLowerCase() === 'approved' ? 'Approved' : status(row).toLowerCase() === 'rejected' ? 'Rejected' : status(row).toLowerCase() === 'in review' ? 'In Review' : status(row).toLowerCase() === 'missing' ? 'Missing' : 'Pending',
   }))
-  const count = (values: string[]) => visibleRows.filter((row) => values.includes(status(row).toLowerCase())).length
+  const count = (values: string[]) => clearances.value.filter((row) => values.includes(row.status.toLowerCase())).length
   stats.value = [
     { value: profilesResult.data.filter((profile) => String(profile.role || '').trim().toLowerCase() === 'student').length, label: 'Total Students', icon: '▣', tone: 'purple' },
     { value: count(['pending', 'in review', 'in_progress']), label: 'In Progress', icon: '◔', tone: 'orange' },
     { value: count(['approved', 'completed', 'cleared']), label: 'Completed', icon: '✓', tone: 'green' },
-    { value: count(['rejected', 'for action']), label: 'For Action', icon: '!', tone: 'red' },
+    { value: count(['rejected', 'for action', 'missing']), label: 'For Action', icon: '!', tone: 'red' },
   ]
   isLoading.value = false
 }
@@ -104,6 +134,7 @@ const statusClasses: Record<string, string> = {
   'In Review': 'bg-[#eee7ff] text-[#7c4fe0]',
   Approved: 'bg-[#daf9ea] text-[#0f9f67]',
   Rejected: 'bg-[#ffd6d6] text-[#d93c3c]',
+  Missing: 'bg-[#ffe4e6] text-[#d93c3c]',
   'For Action': 'bg-[#ffd6d6] text-[#d93c3c]',
 }
 </script>
@@ -150,6 +181,7 @@ const statusClasses: Record<string, string> = {
           <option value="in review">In Review</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
+          <option value="missing">Missing</option>
         </select>
         <select v-model="selectedDepartment" class="w-full sm:w-auto rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2 text-slate-600 text-sm">
           <option value="all">Department: All</option>
@@ -183,7 +215,7 @@ const statusClasses: Record<string, string> = {
             <span :class="['inline-flex rounded-full px-3 py-1 text-xs font-semibold', statusClasses[item.status] || 'bg-slate-200 text-slate-700']">{{ item.status }}</span>
           </div>
           <div class="flex justify-end">
-              <button class="rounded-lg bg-[#8d63e8] px-2 py-1 text-xs font-semibold text-white" @click="selectedClearance = item">{{ item.status === 'Pending' || item.status === 'In Review' ? 'Review' : 'View' }}</button>
+              <button v-if="item.status !== 'Missing'" class="rounded-lg bg-[#8d63e8] px-2 py-1 text-xs font-semibold text-white" @click="selectedClearance = item">{{ item.status === 'Pending' || item.status === 'In Review' ? 'Review' : 'View' }}</button>
           </div>
         </div>
       </div>
