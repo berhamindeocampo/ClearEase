@@ -156,7 +156,8 @@ alter table if exists public.profiles
   add column if not exists section text,
   add column if not exists contact_number text;
 alter table if exists public.departments
-  add column if not exists grade_level text default 'Others';
+  add column if not exists grade_level text default 'Others',
+  add column if not exists section text default 'N/A';
 update public.departments
 set grade_level = 'Others'
 where grade_level is null or trim(grade_level) = '';
