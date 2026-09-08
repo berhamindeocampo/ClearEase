@@ -127,7 +127,7 @@ const lineClasses: Record<StatCard['type'], string> = {
           <div v-if="isLoading" class="px-5 py-6 text-center text-sm text-slate-500">Loading departments...</div>
           <div v-else-if="!departmentRows.length" class="px-5 py-6 text-center text-sm text-slate-500">No departments found.</div>
           <div v-else v-for="department in departmentRows" :key="department.name" class="grid grid-cols-2 gap-3 border-b border-[#b8c0cc] px-5 py-3 text-sm last:border-b-0">
-            <div class="flex min-w-0 items-center gap-2"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ department.name }}</span></div>
+            <div class="flex min-w-0 items-start gap-2"><span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="break-words leading-5">{{ department.name }}</span></div>
             <div>{{ department.adviser }}</div>
           </div>
         </section>
