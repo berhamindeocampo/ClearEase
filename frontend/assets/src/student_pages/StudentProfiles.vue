@@ -4,9 +4,10 @@ import { useRouter } from 'vue-router'
 import { supabase, useAuth } from '../composables/auth'
 
 const router = useRouter()
-const { logOut } = useAuth()
+const { logOut, changePassword } = useAuth()
 const isEditingProfile = ref(false)
 const isSavingProfile = ref(false)
+const isUpdatingPassword = ref(false)
 
 const getSessionUser = () => {
   if (typeof window === 'undefined') return null
@@ -217,7 +218,9 @@ const togglePasswordForm = () => {
   }
 };
 
-const handleUpdatePassword = () => {
+const handleUpdatePassword = async () => {
+  if (isUpdatingPassword.value) return
+
   errorMessage.value = '';
   
   if (passwordForm.value.newPassword !== passwordForm.value.confirmPassword) {
@@ -230,11 +233,17 @@ const handleUpdatePassword = () => {
     return;
   }
 
-  // Here you would typically dispatch an API call to your backend
-  // e.g., await authStore.changePassword(passwordForm.value);
-  
-  alert('Password updated successfully! (Mock)');
-  togglePasswordForm();
+  isUpdatingPassword.value = true
+
+  try {
+    await changePassword(passwordForm.value.currentPassword, passwordForm.value.newPassword)
+    alert('Password updated successfully!')
+    togglePasswordForm()
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : 'Unable to update your password.'
+  } finally {
+    isUpdatingPassword.value = false
+  }
 };
 
 const handleLogOut = async () => {
@@ -410,9 +419,11 @@ const handleLogOut = async () => {
                 </button>
                 <button 
                   type="submit"
+                  :disabled="isUpdatingPassword"
+                  :class="isUpdatingPassword ? 'cursor-not-allowed opacity-60' : ''"
                   class="px-4 py-2 bg-[#8d63e8] text-white text-sm font-medium rounded-md hover:bg-[#7f55dd] transition-colors focus:outline-none focus:ring-2 focus:ring-[#8d63e8]"
                 >
-                  Update Password
+                  {{ isUpdatingPassword ? 'Updating...' : 'Update Password' }}
                 </button>
               </div>
             </form>

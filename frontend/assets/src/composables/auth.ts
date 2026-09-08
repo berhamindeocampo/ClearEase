@@ -203,6 +203,30 @@ export const useAuth = () => {
     }
   }
 
+  const changePassword = async (currentPassword: string, newPassword: string) => {
+    if (!supabase) {
+      throw new Error('Password changes require a configured Supabase connection.')
+    }
+
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    if (userError || !userData.user?.email) {
+      throw userError || new Error('Your session has expired. Please sign in again.')
+    }
+
+    const { error: verifyError } = await supabase.auth.signInWithPassword({
+      email: userData.user.email,
+      password: currentPassword,
+    })
+
+    if (verifyError) throw verifyError
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
+    })
+
+    if (updateError) throw updateError
+  }
+
 
   const getCurrentUser = async () => {
     if (!supabase) {
@@ -237,6 +261,7 @@ export const useAuth = () => {
     signUp,
     logIn,
     logOut,
+    changePassword,
     getCurrentUser,
     getCurrentSession,
   }
