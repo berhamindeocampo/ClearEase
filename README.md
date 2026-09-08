@@ -13,6 +13,7 @@ ClearEase provides a simple and organized way for students and school personnel 
 - **Styling:** Tailwind CSS
 - **Icons:** Lucide Icons
 - **Backend / Database:** Supabase (Postgres, Auth, Row Level Security, Realtime, Storage)
+- **Procedural Programming Language:** PLpgSQL
 - **Routing:** Vue Router
 - **Version Control:** Git & GitHub
 
