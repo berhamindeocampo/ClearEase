@@ -2,26 +2,105 @@
 import { onMounted, ref } from 'vue'
 import SPAddRequirementPopup from '../popups/SPAddRequirementPopup.vue'
 import SPEditRequirementPopup from '../popups/SPEditRequirementPopup.vue'
+import { supabase } from '../composables/auth'
 import { displayDate, fetchRows } from '../lib/database'
 
-const requirements = ref<Array<{ id: string; name: string; department: string; requiredDocument: string; instruction: string; deadline: string }>>([])
+const requirements = ref<Array<{ id: string; name: string; department: string; departmentId: string; requiredDocument: string; instruction: string; deadline: string }>>([])
+const departments = ref<Array<{ id: string; name: string }>>([])
 const isLoading = ref(true)
 const loadError = ref('')
 const activePopup = ref<'add' | 'edit' | null>(null)
 const selectedRequirement = ref<(typeof requirements.value)[number] | null>(null)
 
+type RequirementForm = {
+  name: string
+  department: string
+  departmentId: string
+  requiredDocument: string
+  instruction: string
+  deadline: string
+}
+
+const toRequirementRow = (form: RequirementForm) => ({
+  title: form.name.trim(),
+  required_document: form.requiredDocument.trim() || null,
+  instruction: form.instruction.trim() || null,
+  deadline: form.deadline || null,
+})
+
+async function addRequirement(form: RequirementForm) {
+  if (!supabase) {
+    loadError.value = 'Supabase is not configured.'
+    return
+  }
+
+  const { data: createdRequirement, error } = await supabase.from('requirements').insert({
+    ...toRequirementRow(form),
+    department_id: form.departmentId,
+  }).select('*').single()
+  if (error) {
+    loadError.value = error.message
+    return
+  }
+
+  if (!createdRequirement) {
+    loadError.value = 'Requirement was saved but could not be read back. Check the requirements SELECT policy.'
+    return
+  }
+
+  activePopup.value = null
+  await loadRequirements()
+}
+
+async function updateRequirement(form: RequirementForm) {
+  if (!supabase || !selectedRequirement.value) return
+
+  const { error } = await supabase
+    .from('requirements')
+    .update({ ...toRequirementRow(form), department_id: form.departmentId })
+    .eq('id', selectedRequirement.value.id)
+
+  if (error) {
+    loadError.value = error.message
+    return
+  }
+
+  activePopup.value = null
+  selectedRequirement.value = null
+  await loadRequirements()
+}
+
 async function loadRequirements() {
-  const result = await fetchRows('requirements')
-  loadError.value = result.error || ''
-  requirements.value = result.data.map((item) => ({
+  const [result, departmentsResult] = await Promise.all([fetchRows('requirements'), fetchRows('departments')])
+  loadError.value = result.error || departmentsResult.error || ''
+  departments.value = departmentsResult.data.map((department) => ({ id: String(department.id), name: String(department.name || department.title || department.id) }))
+  const departmentNames = new Map(departments.value.map((department) => [department.id, department.name]))
+  requirements.value = result.data
+    .sort((left, right) => String(right.created_at || '').localeCompare(String(left.created_at || '')))
+    .map((item) => ({
     id: String(item.id),
     name: String(item.title || item.name || 'Requirement'),
-    department: String(item.department_name || item.department || item.department_id || '—'),
+    department: departmentNames.get(String(item.department_id)) || String(item.department_name || item.department_id || '—'),
+    departmentId: String(item.department_id || ''),
     requiredDocument: String(item.required_document || item.document || '—'),
     instruction: String(item.instruction || item.instructions || '—'),
     deadline: displayDate(item.deadline),
-  }))
+    }))
   isLoading.value = false
+}
+
+async function openAddRequirement() {
+  const result = await fetchRows('departments')
+  if (result.error) {
+    loadError.value = result.error
+    return
+  }
+
+  departments.value = result.data.map((department) => ({
+    id: String(department.id),
+    name: String(department.name || department.title || department.id),
+  }))
+  activePopup.value = 'add'
 }
 
 onMounted(loadRequirements)
@@ -38,7 +117,7 @@ onMounted(loadRequirements)
         <select class="w-full sm:w-auto rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2 text-slate-600 text-sm">
           <option>Department: All</option>
         </select>
-        <button class="w-full sm:w-auto bg-[#8d63e8] text-white rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="activePopup = 'add'">
+        <button class="w-full sm:w-auto bg-[#8d63e8] text-white rounded-lg px-3 py-2 sm:px-4 sm:py-2 text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="openAddRequirement">
           + Add Requirements
         </button>
       </div>
@@ -74,7 +153,7 @@ onMounted(loadRequirements)
         </div>
       </div>
     </main>
-    <SPAddRequirementPopup v-if="activePopup === 'add'" @close="activePopup = null" @save="activePopup = null" />
-    <SPEditRequirementPopup v-if="activePopup === 'edit' && selectedRequirement" :requirement="selectedRequirement" @close="activePopup = null; selectedRequirement = null" @save="activePopup = null; selectedRequirement = null" />
+    <SPAddRequirementPopup v-if="activePopup === 'add'" :departments="departments" @close="activePopup = null" @save="addRequirement" />
+    <SPEditRequirementPopup v-if="activePopup === 'edit' && selectedRequirement" :requirement="selectedRequirement" :departments="departments" @close="activePopup = null; selectedRequirement = null" @save="updateRequirement" />
   </div>
 </template>

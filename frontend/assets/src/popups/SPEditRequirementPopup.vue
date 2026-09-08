@@ -4,15 +4,17 @@ import { reactive } from 'vue'
 interface Requirement {
   name: string
   department: string
+  departmentId: string
   requiredDocument: string
   instruction: string
   deadline: string
 }
 
-const props = defineProps<{ requirement?: Requirement }>()
+const props = defineProps<{ requirement?: Requirement; departments: Array<{ id: string; name: string }> }>()
 const form = reactive({
   name: props.requirement?.name ?? '',
   department: props.requirement?.department ?? '',
+  departmentId: props.requirement?.departmentId ?? '',
   requiredDocument: props.requirement?.requiredDocument ?? '',
   instruction: props.requirement?.instruction ?? '',
   deadline: props.requirement?.deadline ?? '',
@@ -30,7 +32,7 @@ function save() {
       <div class="flex items-center justify-between"><h2 class="text-xl font-bold text-slate-900">Edit Requirement</h2><button type="button" class="text-2xl text-slate-400" aria-label="Close" @click="emit('close')">&times;</button></div>
       <div class="mt-5 grid gap-3 sm:grid-cols-2">
         <input v-model="form.name" required placeholder="Requirement" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-        <input v-model="form.department" placeholder="Department" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        <select v-model="form.departmentId" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm"><option value="" disabled>Select department</option><option v-for="department in props.departments" :key="department.id" :value="department.id">{{ department.name }}</option></select>
         <input v-model="form.requiredDocument" placeholder="Required document" class="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2" />
         <textarea v-model="form.instruction" placeholder="Instruction" class="rounded-lg border border-slate-300 px-3 py-2 text-sm sm:col-span-2" />
         <input v-model="form.deadline" type="date" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" />

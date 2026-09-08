@@ -9,8 +9,8 @@ interface Requirement {
   deadline: string
 }
 
-const props = defineProps<{ requirement: Requirement }>()
-const emit = defineEmits<{ (event: 'close'): void; (event: 'submitted', fileName: string): void }>()
+const props = defineProps<{ requirement: Requirement; isSubmitting?: boolean }>()
+const emit = defineEmits<{ (event: 'close'): void; (event: 'submitted', file: File): void }>()
 const selectedFile = ref<File | null>(null)
 
 function handleFileChange(event: Event) {
@@ -20,7 +20,7 @@ function handleFileChange(event: Event) {
 
 function submit() {
   if (!selectedFile.value) return
-  emit('submitted', selectedFile.value.name)
+  emit('submitted', selectedFile.value)
 }
 </script>
 
@@ -47,7 +47,7 @@ function submit() {
 
       <div class="mt-6 flex justify-end gap-3">
         <button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" @click="emit('close')">Cancel</button>
-        <button type="button" class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="!selectedFile" @click="submit">Submit</button>
+        <button type="button" class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50" :disabled="!selectedFile || props.isSubmitting" @click="submit">{{ props.isSubmitting ? 'Submitting...' : 'Submit' }}</button>
       </div>
     </section>
   </div>

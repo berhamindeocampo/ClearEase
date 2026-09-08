@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import AdminHeader from '../headers/AdminHeader.vue'
 import AdminReviewPopup from '../popups/AdminReviewPopup.vue'
+import { supabase } from '../composables/auth'
 import { fetchRows, relativeDate } from '../lib/database'
 
 interface StatCard {
@@ -38,15 +39,15 @@ const counts = computed(() => {
 })
 
 async function loadDashboard() {
-  const [usersResult, submissionsResult] = await Promise.all([fetchRows('users'), fetchRows('clearance_submissions')])
-  loadError.value = usersResult.error || submissionsResult.error || ''
+  const [profilesResult, submissionsResult] = await Promise.all([fetchRows('profiles'), fetchRows('clearance_submissions')])
+  loadError.value = profilesResult.error || submissionsResult.error || ''
   const submissions = submissionsResult.data
   const status = (row: Record<string, any>) => String(row.status || '').toLowerCase()
   const completed = submissions.filter((row) => ['approved', 'completed', 'cleared'].includes(status(row))).length
   const action = submissions.filter((row) => ['rejected', 'for action'].includes(status(row))).length
   const inProgress = Math.max(submissions.length - completed - action, 0)
   statistics.value = [
-    { value: usersResult.data.length, label: 'Total Students', icon: '▣', type: 'purple' },
+    { value: profilesResult.data.filter((profile) => profile.role === 'student').length, label: 'Total Students', icon: '▣', type: 'purple' },
     { value: inProgress, label: 'In Progress', icon: '⌛', type: 'orange' },
     { value: completed, label: 'Completed', icon: '✓', type: 'green' },
     { value: action, label: 'For Action', icon: '!', type: 'red' },
@@ -59,6 +60,23 @@ async function loadDashboard() {
     submitted: relativeDate(row.submitted_at || row.created_at),
   }))
   isLoading.value = false
+}
+
+async function reviewSubmission(status: 'Approved' | 'Rejected') {
+  if (!supabase || !selectedDocument.value) return
+
+  const { error } = await supabase
+    .from('clearance_submissions')
+    .update({ status: status.toLowerCase() })
+    .eq('id', selectedDocument.value.id)
+
+  if (error) {
+    loadError.value = error.message
+    return
+  }
+
+  selectedDocument.value = null
+  await loadDashboard()
 }
 
 onMounted(loadDashboard)
@@ -217,7 +235,7 @@ const reviewDocument = (student: string) => {
       v-if="selectedDocument"
       :document="selectedDocument"
       @close="selectedDocument = null"
-      @reviewed="selectedDocument = null"
+      @reviewed="reviewSubmission"
     />
   </div>
 </template>

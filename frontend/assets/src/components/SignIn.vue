@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import cleareaseLogo from '../assets/clearease.png';
 import universityLogo from '../assets/stpaul.png';
+import { useAuth } from '../composables/auth';
 
 // Define the shape of our form data
 interface SignUpForm {
@@ -9,7 +11,6 @@ interface SignUpForm {
   fullName: string;
   studentId: string;
   password: string;
-  terms: boolean;
 }
 
 // Reactive form state
@@ -17,9 +18,11 @@ const form = reactive<SignUpForm>({
   email: '',
   fullName: '',
   studentId: '',
-  password: '',
-  terms: false
+  password: ''
 });
+
+const router = useRouter();
+const { signUp } = useAuth();
 
 // UI states
 const showPassword = ref(false);
@@ -40,20 +43,19 @@ const handleSubmit = async () => {
     errorMessage.value = 'Please fill in all required fields.';
     return;
   }
-  if (!form.terms) {
-    errorMessage.value = 'You must agree to the Terms and Privacy Policy.';
-    return;
-  }
-
   isSubmitting.value = true;
   
   try {
-    // Simulate API call - Replace with your actual backend call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    console.log('Form submitted successfully:', form);
-    alert('Account created successfully! (Mock)');
-  } catch (error) {
-    errorMessage.value = 'An error occurred during sign up. Please try again.';
+    await signUp({
+      email: form.email.trim(),
+      password: form.password,
+      fullName: form.fullName.trim(),
+      studentId: form.studentId.trim(),
+    });
+
+    router.push('/login');
+  } catch (error: any) {
+    errorMessage.value = error?.message || 'An error occurred during sign up. Please try again.';
   } finally {
     isSubmitting.value = false;
   }
@@ -157,24 +159,6 @@ const handleSubmit = async () => {
                   <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.243 4.243L9.88 9.88"></path>
                 </svg>
               </button>
-            </div>
-          </div>
-
-          <!-- Terms Checkbox -->
-          <div class="flex items-start pt-1">
-            <div class="flex items-center h-5">
-              <input 
-                v-model="form.terms"
-                class="w-4 h-4 text-[#8b5cf6] bg-gray-50 border-gray-300 rounded focus:ring-[#8b5cf6] focus:ring-2" 
-                id="terms" 
-                type="checkbox" 
-                required 
-              />
-            </div>
-            <div class="ml-2 text-xs">
-              <label class="font-medium text-gray-600" for="terms">
-                I agree to the <a class="text-[#7c3aed] hover:underline" href="#">Terms of Service</a> and <a class="text-[#7c3aed] hover:underline" href="#">Privacy Policy</a>
-              </label>
             </div>
           </div>
 

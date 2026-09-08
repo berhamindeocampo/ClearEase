@@ -54,19 +54,23 @@ const handleLogIn = async (): Promise<void> => {
 
   try {
     const response = await logIn(formData.value.email, formData.value.password)
-    const role = response?.user?.role || 'student'
+    const role = response?.user?.role
+
+    if (!role) {
+      throw new Error('Your account role could not be loaded. Please contact an administrator.')
+    }
 
     if (role === 'admin') {
-      router.push('/admindashboard')
+      await router.replace('/admindashboard')
       return
     }
 
     if (role === 'school_personnel') {
-      router.push('/sp/requirements')
+      await router.replace('/sp/requirements')
       return
     }
 
-    router.push('/dashboard')
+    await router.replace('/dashboard')
   } catch (error: any) {
     errors.value.submit = error?.message || 'Failed to log in. Please check your credentials.'
   } finally {

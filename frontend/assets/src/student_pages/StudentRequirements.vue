@@ -4,15 +4,18 @@ import { Search, Filter, BookOpen, Landmark, BadgeCheck, FlaskConical, Brain, Up
 import StudentSubmitPopup from '../popups/StudentSubmitPopup.vue'
 import StudentViewDetailsPopup from '../popups/StudentViewDetailsPopup.vue'
 import { displayDate, fetchRows } from '../lib/database'
+import { supabase, useAuth } from '../composables/auth'
 
 const searchQuery = ref('')
 const activeFilter = ref('All')
-const selectedRequirement = ref<number | null>(null)
+const selectedRequirement = ref<string | null>(null)
 const activePopup = ref<'details' | 'submit' | null>(null)
 
-const requirements = ref<Array<{ id: number; title: string; department: string; requiredDocument: string; instruction: string; deadline: string; status: string; icon: typeof BookOpen }>>([])
+const requirements = ref<Array<{ id: string; title: string; department: string; requiredDocument: string; instruction: string; deadline: string; status: string; icon: typeof BookOpen }>>([])
 const isLoading = ref(true)
 const loadError = ref('')
+const isSubmitting = ref(false)
+const { getCurrentUser } = useAuth()
 
 const iconFor = (value: string) => {
   const normalized = value.toLowerCase()
@@ -24,20 +27,30 @@ const iconFor = (value: string) => {
 }
 
 async function loadRequirements() {
-  const [requirementsResult, submissionsResult] = await Promise.all([fetchRows('requirements'), fetchRows('clearance_submissions')])
-  loadError.value = requirementsResult.error || submissionsResult.error || ''
-  const session = JSON.parse(localStorage.getItem('clearease-local-session') || 'null') as { studentId?: string } | null
-  const studentSubmissions = submissionsResult.data.filter((row) => !session?.studentId || String(row.student_id) === session.studentId)
+  const [requirementsResult, submissionsResult, departmentsResult] = await Promise.all([
+    fetchRows('requirements'),
+    supabase ? supabase.rpc('get_my_clearance_submissions') : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
+    fetchRows('departments'),
+  ])
+  loadError.value = requirementsResult.error || submissionsResult.error?.message || departmentsResult.error || ''
+  const departmentNames = new Map(
+    departmentsResult.data.map((department) => [
+      String(department.id),
+      String(department.name || department.title || department.id),
+    ]),
+  )
+  const currentUser = await getCurrentUser()
+  const studentSubmissions = ((submissionsResult.data ?? []) as Record<string, any>[]).filter((row) => !currentUser || String(row.student_id) === String(currentUser.id))
   requirements.value = requirementsResult.data.map((row, index) => {
     const submission = studentSubmissions.find((item) => String(item.requirement_id) === String(row.id))
     return {
-      id: Number(row.id) || index + 1,
+      id: String(row.id || index + 1),
       title: String(row.title || row.name || 'Requirement'),
-      department: String(row.department_name || row.department || row.department_id || '—'),
+      department: departmentNames.get(String(row.department_id)) || String(row.department_name || row.department || '—'),
       requiredDocument: String(row.required_document || row.document || '—'),
       instruction: String(row.instruction || row.instructions || '—'),
       deadline: displayDate(row.deadline),
-      status: String(submission?.status || 'Pending'),
+      status: String(submission?.status || 'Pending').toLowerCase() === 'approved' ? 'Cleared' : String(submission?.status || 'Pending').toLowerCase() === 'rejected' ? 'Rejected' : String(submission?.status || 'Pending').toLowerCase() === 'in review' ? 'In Review' : 'Pending',
       icon: iconFor(String(row.title || row.name || '')),
     }
   })
@@ -58,14 +71,15 @@ const statusClasses: Record<string, string> = {
   Pending: 'bg-[#fbe5ea] text-[#d94d61]',
   'In Review': 'bg-[#f3efe7] text-[#a16309]',
   Cleared: 'bg-[#e8f7ee] text-[#1f9d72]',
+  Rejected: 'bg-[#ffdfe4] text-[#d93c3c]',
 }
 
-const handleViewDetails = (id: number) => {
+const handleViewDetails = (id: string) => {
   selectedRequirement.value = id
   activePopup.value = 'details'
 }
 
-const handleSubmit = (id: number) => {
+const handleSubmit = (id: string) => {
   selectedRequirement.value = id
   activePopup.value = 'submit'
 }
@@ -76,6 +90,35 @@ const closePopup = () => {
 }
 
 const selectedItem = computed(() => requirements.value.find((item) => item.id === selectedRequirement.value))
+
+async function submitRequirement(file: File) {
+  if (!supabase || !selectedItem.value) return
+
+  isSubmitting.value = true
+  loadError.value = ''
+  try {
+    const user = await getCurrentUser()
+    if (!user) throw new Error('Your session has expired. Please log in again.')
+
+    const filePath = `${user.id}/${selectedItem.value.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+    const upload = await supabase.storage.from('clearance-submissions').upload(filePath, file)
+    if (upload.error) throw upload.error
+
+    const { error } = await supabase.rpc('submit_clearance_requirement', {
+      p_requirement_id: selectedItem.value.id,
+      p_file_name: file.name,
+      p_file_path: filePath,
+    })
+    if (error) throw error
+
+    closePopup()
+    await loadRequirements()
+  } catch (error: any) {
+    loadError.value = error?.message || 'Could not submit the requirement.'
+  } finally {
+    isSubmitting.value = false
+  }
+}
 </script>
 
 <template>
@@ -175,6 +218,7 @@ const selectedItem = computed(() => requirements.value.find((item) => item.id ==
     v-if="activePopup === 'submit' && selectedItem"
     :requirement="selectedItem"
     @close="closePopup"
-    @submitted="closePopup"
+    :is-submitting="isSubmitting"
+    @submitted="submitRequirement"
   />
 </template>

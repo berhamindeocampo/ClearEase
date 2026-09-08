@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { supabase, type UserRole } from '../composables/auth'
 import LandingPage from '../components/LandingPage.vue'
 import StudentDashboard from '../student_pages/StudentDashboard.vue'
+import StudentClearance from '../student_pages/StudentClearance.vue'
 import Requirements from '../student_pages/StudentRequirements.vue'
 import Login from '../components/Login.vue'
 import SignIn from '../components/SignIn.vue'
@@ -22,6 +23,44 @@ const getLocalSession = () => {
   } catch {
     return null
   }
+}
+
+const getSupabaseUserRole = async (userId: string, email?: string): Promise<UserRole> => {
+  const { data: rpcProfile, error: rpcError } = await supabase!
+    .rpc('get_my_profile')
+
+  const rpcRole = String(rpcProfile?.role || '').trim().toLowerCase()
+  if (rpcRole === 'admin' || rpcRole === 'school_personnel' || rpcRole === 'student') {
+    return rpcRole
+  }
+
+  const { data, error } = await supabase!
+    .from('profiles')
+    .select('role')
+    .eq('id', userId)
+    .maybeSingle()
+
+  const role = String(data?.role || '').trim().toLowerCase()
+  if (role === 'admin' || role === 'school_personnel') return role
+
+  if (email) {
+    const { data: emailData, error: emailError } = await supabase!
+      .from('profiles')
+      .select('role')
+      .eq('email', email)
+      .maybeSingle()
+
+    const emailRole = String(emailData?.role || '').trim().toLowerCase()
+    if (!emailError && (emailRole === 'admin' || emailRole === 'school_personnel')) {
+      return emailRole
+    }
+  }
+
+  if (error || rpcError) {
+    console.error('Error fetching user role:', error?.message || rpcError?.message)
+  }
+
+  return 'student'
 }
 
 const router = createRouter({
@@ -50,7 +89,7 @@ const router = createRouter({
     {
       path: '/clearance',
       name: 'clearance',
-      component: StudentDashboard,
+      component: StudentClearance,
     },
     {
       path: '/requirements',
@@ -125,24 +164,19 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  const localSession = getLocalSession()
-  if (localSession) {
+  if (!supabase) {
+    const localSession = getLocalSession()
+    if (!localSession) {
+      next('/login')
+      return
+    }
+
     if (isAdminRoute && localSession.role !== 'admin') {
       next('/dashboard')
       return
     }
 
     if (isSchoolPersonnelRoute && localSession.role !== 'school_personnel' && localSession.role !== 'admin') {
-      next('/dashboard')
-      return
-    }
-
-    if (to.name === 'sp-settings' && localSession.role !== 'school_personnel' && localSession.role !== 'admin') {
-      next('/dashboard')
-      return
-    }
-
-    if (to.name === 'admin-settings' && localSession.role !== 'admin') {
       next('/dashboard')
       return
     }
@@ -156,31 +190,23 @@ router.beforeEach(async (to, _from, next) => {
     return
   }
 
-  if (!supabase) {
-    next('/login')
-    return
-  }
-
   try {
     const {
       data: { session },
     } = await supabase.auth.getSession()
 
     if (session) {
-      const sessionEmail = session.user?.email
-      const fallbackRole: UserRole = sessionEmail ? await (async (): Promise<UserRole> => {
-        const { data, error } = await supabase
-          .from('admin')
-          .select('email')
-          .eq('email', sessionEmail)
-          .maybeSingle()
+      const fallbackRole = await getSupabaseUserRole(session.user.id, session.user.email)
 
-        if (!error && data) {
-          return 'admin'
-        }
+      if (fallbackRole === 'admin' && !isAdminRoute) {
+        next('/admindashboard')
+        return
+      }
 
-        return 'student'
-      })() : 'student'
+      if (fallbackRole === 'school_personnel' && !isSchoolPersonnelRoute && !isSettingsRoute) {
+        next('/sp/requirements')
+        return
+      }
 
       if (isAdminRoute && fallbackRole !== 'admin') {
         next('/dashboard')

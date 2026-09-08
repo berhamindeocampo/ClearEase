@@ -9,9 +9,32 @@ const LEGACY_USER_EMAIL_KEY = 'clearease-user-email'
 
 export type UserRole = 'student' | 'admin' | 'school_personnel'
 
+export interface Profile {
+  id: string
+  email: string
+  full_name: string
+  student_id: string | null
+  role: UserRole
+}
+
+export interface SignUpData {
+  email: string
+  password: string
+  fullName: string
+  studentId: string
+  role?: UserRole
+}
+
+const normalizeRole = (role: unknown): UserRole | null => {
+  const normalizedRole = String(role || '').trim().toLowerCase()
+  return normalizedRole === 'student' || normalizedRole === 'admin' || normalizedRole === 'school_personnel'
+    ? normalizedRole
+    : null
+}
+
+// Local storage helpers
 const getLocalSession = () => {
   if (typeof window === 'undefined') return null
-
   try {
     return JSON.parse(localStorage.getItem(LOCAL_SESSION_KEY) || 'null')
   } catch {
@@ -19,275 +42,195 @@ const getLocalSession = () => {
   }
 }
 
-const saveLocalSession = (user: { email: string; fullName: string; studentId: string; role?: UserRole }) => {
+const saveLocalSession = (user: { email: string; fullName: string; studentId?: string; role: UserRole }) => {
   if (typeof window === 'undefined') return
   localStorage.setItem(LOCAL_SESSION_KEY, JSON.stringify(user))
   localStorage.setItem(LEGACY_USER_NAME_KEY, user.fullName)
   localStorage.setItem(LEGACY_USER_EMAIL_KEY, user.email)
 }
 
-const resolveUserRole = async (email: string): Promise<UserRole> => {
-  if (!supabase) {
-    const session = getLocalSession()
-    return session?.role === 'admin' ? 'admin' : session?.role === 'school_personnel' ? 'school_personnel' : 'student'
-  }
-
-  const { data, error } = await supabase
-    .from('clearease_personnel')
-    .select('role')
-    .eq('role', email)
-    .maybeSingle()
-
-  if (!error && data?.role === 'admin') {
-    return 'admin'
-  }
-
-  if (error && !['42P01', '42703'].includes(error.code || '')) {
-    console.warn('Personnel role check failed:', error.message)
-  }
-
-  if (!error && data?.role === 'schoolpersonnel') {
-    return 'school_personnel'
-  }
-
-  return 'student'
-}
-
 const clearLocalSession = () => {
   if (typeof window === 'undefined') return
   localStorage.removeItem(LOCAL_SESSION_KEY)
+  localStorage.removeItem(LEGACY_USER_NAME_KEY)
+  localStorage.removeItem(LEGACY_USER_EMAIL_KEY)
 }
 
 export const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null
 
-export interface SignUpData {
-  email: string
-  password: string
-  fullName: string
-  studentId: string
-}
-
 export const useAuth = () => {
+
+  const fetchUserProfile = async (userId: string, email?: string): Promise<Profile | null> => {
+    if (!supabase) return null
+
+    const { data: rpcProfile, error: rpcError } = await supabase.rpc('get_my_profile')
+    if (!rpcError && rpcProfile) return rpcProfile as Profile
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (data) return data as Profile
+
+    if (error) {
+      console.error('Error fetching profile by ID:', error.message)
+    }
+
+    if (rpcError) console.error('Error fetching profile with get_my_profile:', rpcError.message)
+
+    if (!email) return null
+
+    const { data: emailData, error: emailError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle()
+
+    if (emailError) console.error('Error fetching profile by email:', emailError.message)
+
+    return (emailData as Profile) || null
+  }
+
   const signUp = async (data: SignUpData) => {
+    const assignedRole: UserRole = data.role || 'student'
+
     if (!supabase) {
-      const existing = getLocalSession()
-      if (existing?.email?.toLowerCase() === data.email.toLowerCase()) {
-        throw new Error('An account with this email already exists.')
-      }
-
-      const role = 'student'
-
       saveLocalSession({
         email: data.email,
         fullName: data.fullName,
         studentId: data.studentId,
-        role,
+        role: assignedRole,
       })
 
       return {
-        user: {
-          id: 'local-user',
-          email: data.email,
-          role,
-        },
+        user: { id: 'local-user', email: data.email, role: assignedRole },
       }
     }
 
-    const { data: inserted, error } = await supabase
-      .from('users')
-      .insert([
-        {
-          email: data.email,
-          password: data.password,
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
           full_name: data.fullName,
           student_id: data.studentId,
-          created_at: new Date().toISOString(),
+          role: assignedRole,
         },
-      ])
-      .select()
+      },
+    })
 
-    if (error) {
-      throw error
-    }
-
-    const role = await resolveUserRole(data.email)
+    if (authError) throw authError
+    if (!authData.user) throw new Error('User creation failed.')
 
     saveLocalSession({
       email: data.email,
       fullName: data.fullName,
       studentId: data.studentId,
-      role,
-    })
-
-    return { user: { id: inserted?.[0]?.id ?? 'supabase-user', email: data.email, role } }
-  }
-
-  const logIn = async (email: string, password: string, requestedRole: UserRole = 'student') => {
-    if (!supabase) {
-      const session = getLocalSession()
-
-      if (session && session.email.toLowerCase() === email.toLowerCase()) {
-        const role: UserRole = session.role === 'admin'
-          ? 'admin'
-          : session.role === 'school_personnel'
-            ? 'school_personnel'
-            : 'student'
-        saveLocalSession({
-          email: session.email,
-          fullName: session.fullName,
-          studentId: session.studentId,
-          role,
-        })
-
-        return {
-          user: {
-            id: 'local-user',
-            email,
-            role,
-          },
-        }
-      }
-
-      throw new Error('Invalid login credentials')
-    }
-
-    const normalizedIdentifier = email.toLowerCase().replace(/[^a-z]/g, '')
-    const inferredRole = normalizedIdentifier.includes('schoolpersonnel')
-      ? 'school_personnel'
-      : normalizedIdentifier.includes('admin')
-        ? 'admin'
-        : requestedRole
-    const roleTable = inferredRole === 'admin' || inferredRole === 'school_personnel' ? 'clearease_personnel' : null
-    if (roleTable && !email.includes('@')) {
-      const { data: roleData, error: roleError } = await supabase
-        .from(roleTable)
-        .select('*')
-        .eq('role', inferredRole === 'school_personnel' ? 'schoolpersonnel' : 'admin')
-        .eq('password', password)
-        .maybeSingle()
-
-      if (roleError && !['42P01', '42703'].includes(roleError.code || '')) {
-        throw roleError
-      }
-
-      if (roleData) {
-        const roleEmail = roleData.email || `${email}@clearease.local`
-        const roleName = roleData.full_name || roleData.fullName || roleData.name || roleData.username || roleData.user_name || email
-        saveLocalSession({
-          email: roleEmail,
-          fullName: roleName,
-          studentId: roleData.student_id || roleData.id || inferredRole.toUpperCase(),
-          role: inferredRole,
-        })
-
-        return { user: { id: roleData.id, email: roleEmail, role: inferredRole } }
-      }
-    }
-
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .eq('password', password)
-      .maybeSingle()
-
-    if (error) {
-      throw error
-    }
-
-    if (data) {
-      const role = await resolveUserRole(data.email)
-
-      saveLocalSession({
-        email: data.email,
-        fullName: data.full_name,
-        studentId: data.student_id,
-        role,
-      })
-
-      return {
-        user: {
-          id: data.id,
-          email: data.email,
-          role,
-        },
-      }
-    }
-
-    const { data: personnelData, error: personnelError } = await supabase
-      .from('clearease_personnel')
-      .select('*')
-      .eq('role', 'schoolpersonnel')
-      .eq('password', password)
-      .maybeSingle()
-
-    if (personnelError && !['42P01', '42703'].includes(personnelError.code || '')) {
-      throw personnelError
-    }
-
-    if (!personnelData) {
-      throw new Error('Invalid login credentials')
-    }
-
-    const personnelEmail = personnelData.email || 'schoolpersonnel@clearease.local'
-    const personnelName = personnelData.full_name || personnelData.fullName || personnelData.name || personnelData.username || personnelData.user_name || personnelEmail
-    saveLocalSession({
-      email: personnelEmail,
-      fullName: personnelName,
-      studentId: personnelData.student_id || personnelData.id || 'PERSONNEL',
-      role: 'school_personnel',
+      role: assignedRole,
     })
 
     return {
       user: {
-        id: personnelData.id,
-        email: personnelEmail,
-        role: 'school_personnel',
+        id: authData.user.id,
+        email: authData.user.email!,
+        role: assignedRole,
       },
+      session: authData.session,
     }
   }
 
+
+  const logIn = async (email: string, password: string) => {
+    // Fallback mode when Supabase isn't configured
+    if (!supabase) {
+      const session = getLocalSession()
+      if (session && session.email.toLowerCase() === email.toLowerCase()) {
+        return {
+          user: { id: 'local-user', email: session.email, role: session.role || 'student' },
+        }
+      }
+      throw new Error('Invalid login credentials')
+    }
+
+    // A. Authenticate with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (authError) throw authError
+    if (!authData.user) throw new Error('Authentication failed.')
+
+    // B. Fetch profile from 'profiles' table using authData.user.id
+    const profile = await fetchUserProfile(authData.user.id, authData.user.email || email)
+
+    const userRole = normalizeRole(profile?.role)
+    if (!profile || !userRole) {
+      await supabase.auth.signOut()
+      throw new Error(`No valid profile role was found for ${authData.user.email || email}. Check the profiles table and RLS policy.`)
+    }
+
+    const fullName = profile?.full_name || email
+    const studentId = profile?.student_id || ''
+
+    // Cache details locally for components reading legacy keys
+    saveLocalSession({
+      email: authData.user.email!,
+      fullName,
+      studentId,
+      role: userRole,
+    })
+
+    return {
+      user: {
+        id: authData.user.id,
+        email: authData.user.email!,
+        role: userRole,
+      },
+      session: authData.session,
+      profile,
+    }
+  }
+
+
   const logOut = async () => {
     clearLocalSession()
-
     if (supabase) {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
     }
   }
 
+
   const getCurrentUser = async () => {
-    const session = getLocalSession()
-    if (session) {
-      return { id: 'local-user', email: session.email, role: session.role || 'student' }
-    }
-
     if (!supabase) {
-      return null
+      const session = getLocalSession()
+      return session ? { id: 'local-user', email: session.email, role: session.role } : null
     }
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    const { data: { user }, error } = await supabase.auth.getUser()
 
-    return user
+    if (error || !user) return null
+
+    const profile = await fetchUserProfile(user.id, user.email)
+
+    return {
+      ...user,
+      role: normalizeRole(profile?.role) || 'student',
+      profile,
+    }
   }
 
   const getCurrentSession = async () => {
-    const localSession = getLocalSession()
-    if (localSession) {
-      return localSession
-    }
-
     if (!supabase) {
-      return null
+      return getLocalSession()
     }
 
-    const {
-      data: { session: supabaseSession },
-    } = await supabase.auth.getSession()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    return supabaseSession
+    return session
   }
 
   return {

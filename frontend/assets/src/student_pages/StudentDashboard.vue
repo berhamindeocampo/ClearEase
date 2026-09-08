@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Bell, Check, Clock3, X } from 'lucide-vue-next'
-import StudentNotifPopup from '../popups/StudentNotifPopup.vue'
+import { useRouter } from 'vue-router'
+import { Check, Clock3, X } from 'lucide-vue-next'
 import StudentViewAllPopup from '../popups/StudentViewAllPopup.vue'
+import { supabase, useAuth } from '../composables/auth'
 import { displayDate, fetchRows } from '../lib/database'
 
 interface Activity {
@@ -15,7 +16,6 @@ interface Activity {
 }
 
 const studentName = ref('Student')
-const notificationCount = ref(0)
 const clearanceProgress = ref(0)
 const requirementsTotal = ref(0)
 const requirementsCompleted = ref(0)
@@ -23,10 +23,23 @@ const requirementsPending = ref(0)
 const requirementsRejected = ref(0)
 const daysRemaining = ref(0)
 const lastUpdated = ref('—')
-const activePopup = ref<'notifications' | 'activity' | null>(null)
+const activePopup = ref<'activity' | null>(null)
 const activityError = ref('')
+const router = useRouter()
+const { getCurrentUser } = useAuth()
 
-onMounted(() => {
+onMounted(async () => {
+  const currentUser = await getCurrentUser()
+  if (currentUser?.role === 'admin') {
+    await router.replace('/admindashboard')
+    return
+  }
+
+  if (currentUser?.role === 'school_personnel') {
+    await router.replace('/sp/requirements')
+    return
+  }
+
   const session = localStorage.getItem('clearease-local-session')
   const savedName = localStorage.getItem('clearease-user-name')
   const savedEmail = localStorage.getItem('clearease-user-email')
@@ -57,16 +70,18 @@ onMounted(() => {
 const recentActivities = ref<Activity[]>([])
 
 async function loadActivities() {
-  const submissionsResult = await fetchRows('clearance_submissions')
-  const session = JSON.parse(localStorage.getItem('clearease-local-session') || 'null') as { studentId?: string } | null
-  const submissions = submissionsResult.data.filter((row) => !session?.studentId || String(row.student_id) === session.studentId)
+  const submissionsResult = supabase
+    ? await supabase.rpc('get_my_clearance_submissions')
+    : { data: [], error: { message: 'Supabase is not configured.' } }
+  const currentUser = await getCurrentUser()
+  const submissionRows = (submissionsResult.data ?? []) as Record<string, any>[]
+  const submissions = submissionRows.filter((row: Record<string, unknown>) => !currentUser || String(row.student_id) === String(currentUser.id))
   const statuses = submissions.map((row) => String(row.status || 'pending').toLowerCase())
   requirementsTotal.value = submissions.length
   requirementsCompleted.value = statuses.filter((status) => ['approved', 'completed', 'cleared'].includes(status)).length
   requirementsRejected.value = statuses.filter((status) => ['rejected', 'for action'].includes(status)).length
   requirementsPending.value = Math.max(requirementsTotal.value - requirementsCompleted.value - requirementsRejected.value, 0)
   clearanceProgress.value = requirementsTotal.value ? Math.round((requirementsCompleted.value / requirementsTotal.value) * 100) : 0
-  notificationCount.value = requirementsPending.value + requirementsRejected.value
   lastUpdated.value = displayDate(submissions[0]?.updated_at || submissions[0]?.created_at)
   const deadline = submissions
     .map((row) => row.deadline)
@@ -77,13 +92,14 @@ async function loadActivities() {
   daysRemaining.value = deadline ? Math.max(0, Math.ceil((deadline - Date.now()) / 86400000)) : 0
 
   const result = await fetchRows('activity_logs')
-  if (result.error) {
-    activityError.value = submissionsResult.error || result.error
+  if (result.error || (result.data.length === 0 && submissions.length > 0)) {
+    activityError.value = result.error || ''
     recentActivities.value = submissions.slice(0, 5).map((row, index) => {
-      const status = String(row.status || 'Pending')
+      const rawStatus = String(row.status || 'pending').toLowerCase()
+      const status = rawStatus === 'approved' ? 'Approved' : rawStatus === 'rejected' ? 'Rejected' : 'Pending'
       return {
         id: row.id || index,
-        title: String(row.title || row.requirement_name || 'Clearance update'),
+        title: String(row.remarks || row.title || row.requirement_name || 'Clearance update'),
         department: String(row.department_name || row.department || '—'),
         status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
         type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
@@ -112,10 +128,6 @@ const userInitials = computed(() => {
   const names = studentName.value.split(' ')
   return names.map((n: string) => n[0]).join('').toUpperCase()
 })
-
-const toggleNotifications = () => {
-  activePopup.value = 'notifications'
-}
 
 const toggleProfile = () => {
   console.log('Toggle profile menu')
@@ -169,19 +181,6 @@ button {
       </div>
 
       <div class="flex items-center gap-3">
-        <button
-          @click="toggleNotifications"
-          class="relative rounded-full bg-white border border-slate-200 p-3 text-slate-600 hover:text-slate-900"
-        >
-          <Bell class="h-5 w-5" />
-          <span
-            v-if="notificationCount > 0"
-            class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full h-5 w-5 flex items-center justify-center"
-          >
-            {{ notificationCount }}
-          </span>
-        </button>
-
         <button
           @click="toggleProfile"
           class="flex items-center gap-3 rounded-full bg-white border border-slate-200 px-3 py-2 shadow-sm"
@@ -250,7 +249,6 @@ button {
       </div>
     </div>
 
-    <StudentNotifPopup v-if="activePopup === 'notifications'" :activities="recentActivities" @close="activePopup = null" />
     <StudentViewAllPopup v-if="activePopup === 'activity'" :activities="recentActivities" @close="activePopup = null" />
   </section>
 </template>

@@ -49,14 +49,17 @@ async function fetchAccounts() {
     return
   }
 
-  const table = activeType.value === 'students' ? 'users' : 'clearease_personnel'
-  const { data, error } = await supabase.from(table).select('*').order('id', { ascending: true })
+  const { data, error } = await supabase.rpc('get_admin_profiles')
 
   if (error) {
     accounts.value = []
     errorMessage.value = error.message
   } else {
-    accounts.value = (data ?? []).map((record) => mapAccount(record, activeType.value))
+    const role = activeType.value === 'students' ? 'student' : 'school_personnel'
+    accounts.value = (data ?? [])
+      .filter((record: Record<string, unknown>) => String(record.role || '').trim().toLowerCase() === role)
+      .sort((left: Record<string, unknown>, right: Record<string, unknown>) => getName(left).localeCompare(getName(right)))
+      .map((record: Record<string, unknown>) => mapAccount(record, activeType.value))
   }
 
   isLoading.value = false
