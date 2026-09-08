@@ -2,11 +2,7 @@
   <div id="app" class="flex min-h-screen flex-col bg-slate-50">
     <component :is="currentHeader" v-if="showHeader" />
     <main class="min-w-0 flex-1 overflow-hidden">
-      <router-view v-slot="{ Component, route: currentRoute }">
-        <transition name="page-transition" mode="out-in">
-          <component :is="Component" :key="currentRoute.fullPath" />
-        </transition>
-      </router-view>
+      <router-view />
     </main>
     <Footer v-if="showFooter" />
   </div>
