@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import AdminHeader from '../headers/AdminHeader.vue'
+import { supabase } from '../composables/auth'
 import { fetchRows } from '../lib/database'
 
 interface StatCard {
@@ -34,12 +35,14 @@ const statistics = computed<StatCard[]>(() => [
 
 async function loadDashboard() {
   const [profilesResult, departmentsResult] = await Promise.all([
-    fetchRows('profiles'),
+    supabase
+      ? supabase.rpc('get_admin_profiles')
+      : Promise.resolve({ data: null, error: { message: 'Supabase is not configured.' } }),
     fetchRows('departments'),
   ])
 
-  loadError.value = profilesResult.error || departmentsResult.error || ''
-  const profiles = profilesResult.data
+  loadError.value = profilesResult.error?.message || departmentsResult.error || ''
+  const profiles = (profilesResult.data ?? []) as Record<string, any>[]
   const role = (profile: Record<string, any>) => String(profile.role || '').trim().toLowerCase()
 
   counts.value = {
