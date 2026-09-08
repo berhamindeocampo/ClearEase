@@ -66,7 +66,7 @@ const loadClassList = async () => {
   let profileRows = profilesResult.data ?? []
   let profileError = profilesResult.error?.message ?? ''
 
-  if (profilesResult.error) {
+  if (profilesResult.error || profileRows.length === 0) {
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError || !userData.user) {
       profileError = userError?.message || 'Unable to identify the signed-in school personnel account.'
@@ -79,15 +79,35 @@ const loadClassList = async () => {
       if (assignmentsError) {
         profileError = assignmentsError.message
       } else {
-        const departmentIds = [...new Set((assignments ?? []).map((row) => String(row.department_id)))]
-        if (departmentIds.length === 0) {
+        const departmentIds = new Set((assignments ?? []).map((row) => String(row.department_id)))
+
+        const { data: currentProfile } = await supabase
+          .from('profiles')
+          .select('full_name, email')
+          .eq('id', userData.user.id)
+          .maybeSingle()
+
+        const personnelNames = new Set([
+          String(currentProfile?.full_name || '').trim().toLowerCase(),
+          String(currentProfile?.email || userData.user.email || '').trim().toLowerCase(),
+        ].filter(Boolean))
+
+        for (const department of departmentsResult.data) {
+          const adviser = String(department.adviser || '').trim().toLowerCase()
+          if (adviser && personnelNames.has(adviser)) {
+            departmentIds.add(String(department.id))
+          }
+        }
+
+        const assignedDepartmentIds = [...departmentIds]
+        if (assignedDepartmentIds.length === 0) {
           profileRows = []
           profileError = ''
         } else {
           const { data: memberships, error: membershipsError } = await supabase
             .from('department_students')
             .select('student_id')
-            .in('department_id', departmentIds)
+            .in('department_id', assignedDepartmentIds)
 
           if (membershipsError) {
             profileError = membershipsError.message
@@ -114,8 +134,8 @@ const loadClassList = async () => {
 
   loadError.value = profileError || requirementsResult.error || departmentsResult.error || ''
   students.value = profileRows
-    .filter((row) => String(row.role || '').toLowerCase() === 'student')
-    .map((row) => ({
+    .filter((row: Record<string, unknown>) => String(row.role || '').toLowerCase() === 'student')
+    .map((row: Record<string, unknown>) => ({
       id: String(row.id),
       fullName: String(row.full_name || row.email || 'Student'),
       email: String(row.email || ''),
@@ -123,7 +143,7 @@ const loadClassList = async () => {
       gradeLevel: String(row.grade_level || 'N/A'),
       section: String(row.section || 'N/A'),
     }))
-    .sort((left, right) => left.fullName.localeCompare(right.fullName))
+    .sort((left: Student, right: Student) => left.fullName.localeCompare(right.fullName))
 
   const departmentNames = new Map(departmentsResult.data.map((row) => [String(row.id), String(row.name || row.title || '—')]))
   requirements.value = requirementsResult.data.map((row) => ({
