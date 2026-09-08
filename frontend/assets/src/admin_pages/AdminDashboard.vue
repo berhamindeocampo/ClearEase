@@ -38,6 +38,17 @@ const counts = computed(() => {
   return { total, inProgress, completed, action }
 })
 
+const overviewPercentages = computed(() => {
+  const total = counts.value.inProgress + counts.value.completed + counts.value.action
+  if (!total) return { completed: 0, inProgress: 0, action: 0 }
+
+  return {
+    completed: Math.round((counts.value.completed / total) * 100),
+    inProgress: Math.round((counts.value.inProgress / total) * 100),
+    action: Math.round((counts.value.action / total) * 100),
+  }
+})
+
 async function loadDashboard() {
   const [profilesResult, submissionsResult] = await Promise.all([fetchRows('profiles'), fetchRows('clearance_submissions')])
   loadError.value = profilesResult.error || submissionsResult.error || ''
@@ -153,9 +164,9 @@ const reviewDocument = (student: string) => {
 
             <div class="flex items-center gap-3 mt-2">
               <div class="flex-1 h-2 overflow-hidden rounded-full bg-[#bda3ff]">
-                <div class="h-full rounded-full bg-[#5520c5]" style="width: 35%"></div>
+                <div class="h-full rounded-full bg-[#5520c5]" :style="{ width: `${overviewPercentages.completed}%` }"></div>
               </div>
-              <span class="w-8 text-sm">35%</span>
+              <span class="w-8 text-sm">{{ overviewPercentages.completed }}%</span>
             </div>
           </div>
 
@@ -167,9 +178,9 @@ const reviewDocument = (student: string) => {
 
             <div class="flex items-center gap-3 mt-2">
               <div class="flex-1 h-2 overflow-hidden rounded-full bg-[#bda3ff]">
-                <div class="h-full rounded-full bg-[#5520c5]" style="width: 52%"></div>
+                <div class="h-full rounded-full bg-[#5520c5]" :style="{ width: `${overviewPercentages.inProgress}%` }"></div>
               </div>
-              <span class="w-8 text-sm">52%</span>
+              <span class="w-8 text-sm">{{ overviewPercentages.inProgress }}%</span>
             </div>
           </div>
 
@@ -182,9 +193,9 @@ const reviewDocument = (student: string) => {
 
             <div class="flex items-center gap-3 mt-2">
               <div class="flex-1 h-2 overflow-hidden rounded-full bg-[#bda3ff]">
-                <div class="h-full rounded-[20px] bg-[#ed0000]" style="width: 12%"></div>
+                <div class="h-full rounded-[20px] bg-[#ed0000]" :style="{ width: `${overviewPercentages.action}%` }"></div>
               </div>
-              <span class="w-10 text-xl">12%</span>
+              <span class="w-10 text-xl">{{ overviewPercentages.action }}%</span>
             </div>
           </div>
         </section>
