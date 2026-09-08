@@ -1,68 +1,200 @@
 @import "tailwindcss";
 
 :root {
-	color-scheme: light;
+    color-scheme: light;
+    --clearease-ink: #17233f;
+    --clearease-purple: #7c3aed;
+    --clearease-blue: #2563eb;
+    --clearease-cyan: #06b6d4;
+    --clearease-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root[data-theme='dark'] {
-	color-scheme: dark;
+    color-scheme: dark;
 }
 
 :root[data-theme='dark'] body,
 :root[data-theme='dark'] #app,
 :root[data-theme='dark'] main {
-	background-color: #111827;
-	color: #e5e7eb;
+    background-color: #111827;
+    color: #e5e7eb;
 }
 
 :root[data-theme='dark'] header,
 :root[data-theme='dark'] footer,
 :root[data-theme='dark'] .bg-white {
-	background-color: #1f2937 !important;
-	color: #e5e7eb;
+    background-color: #1f2937 !important;
+    color: #e5e7eb;
 }
 
 :root[data-theme='dark'] .bg-gray-100,
 :root[data-theme='dark'] .bg-gray-50 {
-	background-color: #111827 !important;
+    background-color: #111827 !important;
 }
 
 :root[data-theme='dark'] .border-gray-200,
 :root[data-theme='dark'] .border-gray-300 {
-	border-color: #475569 !important;
+    border-color: #475569 !important;
 }
 
 :root[data-theme='dark'] .text-slate-900,
 :root[data-theme='dark'] .text-gray-900,
 :root[data-theme='dark'] .text-gray-800 {
-	color: #f9fafb !important;
+    color: #f9fafb !important;
 }
 
 :root[data-theme='dark'] .text-slate-700,
 :root[data-theme='dark'] .text-gray-700,
 :root[data-theme='dark'] .text-gray-600,
 :root[data-theme='dark'] .text-gray-500 {
-	color: #cbd5e1 !important;
+    color: #cbd5e1 !important;
 }
 
 :root[data-theme='dark'] input,
 :root[data-theme='dark'] textarea,
 :root[data-theme='dark'] select {
-	background-color: #111827;
-	color: #f9fafb;
-	border-color: #475569;
+    background-color: #111827;
+    color: #f9fafb;
+    border-color: #475569;
 }
 
 :root[data-theme='dark'] input::placeholder,
 :root[data-theme='dark'] textarea::placeholder {
-	color: #94a3b8;
-	opacity: 1;
+    color: #94a3b8;
+    opacity: 1;
 }
 
 :root[data-theme='dark'] input:focus,
 :root[data-theme='dark'] textarea:focus,
 :root[data-theme='dark'] select:focus {
-	border-color: #8b5cf6;
-	outline: 2px solid rgb(139 92 246 / 0.25);
-	outline-offset: 0;
+    border-color: #8b5cf6;
+    outline: 2px solid rgb(139 92 246 / 0.25);
+    outline-offset: 0;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: 'Nunito Sans', 'Avenir Next', 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+    transition-duration: 240ms;
+    transition-timing-function: var(--clearease-ease);
+}
+
+.page-transition-enter-active,
+.page-transition-leave-active {
+    transition: opacity 320ms var(--clearease-ease), transform 420ms var(--clearease-ease);
+}
+
+.page-transition-enter-from {
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+.page-transition-leave-to {
+    opacity: 0;
+    transform: translateY(-6px);
+}
+
+.auth-shell {
+    background:
+        radial-gradient(circle at 12% 18%, rgb(6 182 212 / 0.2), transparent 28%),
+        radial-gradient(circle at 88% 84%, rgb(124 58 237 / 0.22), transparent 30%),
+        linear-gradient(135deg, #f5f7ff 0%, #eefbfc 100%);
+}
+
+.auth-card {
+    background: rgb(255 255 255 / 0.88);
+    border: 1px solid rgb(255 255 255 / 0.8);
+    box-shadow: 0 24px 70px rgb(47 39 88 / 0.14);
+    backdrop-filter: blur(18px);
+    animation: card-rise 700ms var(--clearease-ease) both;
+}
+
+.auth-input {
+    border-color: #d7d9ef;
+    box-shadow: 0 1px 0 rgb(23 35 63 / 0.02);
+    transition: border-color 240ms var(--clearease-ease), box-shadow 240ms var(--clearease-ease), background-color 240ms var(--clearease-ease);
+}
+
+.auth-input:hover {
+    border-color: #a5b4fc;
+}
+
+.auth-input:focus {
+    border-color: var(--clearease-purple);
+    box-shadow: 0 0 0 4px rgb(124 58 237 / 0.12), 0 8px 20px rgb(124 58 237 / 0.08);
+}
+
+.brand-button {
+    background: linear-gradient(110deg, var(--clearease-purple), var(--clearease-blue));
+    box-shadow: 0 12px 24px rgb(79 70 229 / 0.22);
+    transition: transform 240ms var(--clearease-ease), box-shadow 240ms var(--clearease-ease), filter 240ms var(--clearease-ease);
+}
+
+.brand-button:hover:not(:disabled) {
+    filter: saturate(1.12);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px rgb(79 70 229 / 0.3);
+}
+
+.brand-button:active:not(:disabled) {
+    transform: translateY(0) scale(0.985);
+}
+
+.segmented-control a {
+    position: relative;
+    isolation: isolate;
+}
+
+.segmented-control a::after {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: linear-gradient(110deg, var(--clearease-purple), var(--clearease-blue));
+    content: '';
+    opacity: 0;
+    transform: scale(0.86);
+    transition: opacity 240ms var(--clearease-ease), transform 320ms var(--clearease-ease);
+}
+
+.segmented-control a[aria-current='page']::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+@keyframes card-rise {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
 }

@@ -1,8 +1,12 @@
 <template>
   <div id="app" class="flex min-h-screen flex-col bg-slate-50">
     <component :is="currentHeader" v-if="showHeader" />
-    <main class="min-w-0 flex-1">
-      <router-view />
+    <main class="min-w-0 flex-1 overflow-hidden">
+      <router-view v-slot="{ Component, route: currentRoute }">
+        <transition name="page-transition" mode="out-in">
+          <component :is="Component" :key="currentRoute.fullPath" />
+        </transition>
+      </router-view>
     </main>
     <Footer v-if="showFooter" />
   </div>
@@ -36,7 +40,4 @@ const currentHeader = computed(() => {
 </script>
 
 <style>
-#app {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-}
 </style>

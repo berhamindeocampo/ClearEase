@@ -67,8 +67,8 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="bg-[#e9e0ef] min-h-screen flex items-center justify-center p-3 antialiased text-slate-900 font-sans">
-    <main class="w-full max-w-[460px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden border border-gray-100">
+  <div class="auth-shell min-h-screen flex items-center justify-center p-3 antialiased text-slate-900 font-sans">
+    <main class="auth-card w-full max-w-[460px] rounded-2xl overflow-hidden">
       <div class="p-5 sm:p-6">
         <router-link to="/" class="group mb-4 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/70 px-3.5 py-2 text-sm font-semibold text-purple-700 shadow-sm transition hover:border-purple-300 hover:bg-purple-100 hover:text-purple-900 hover:shadow-md">
           <ArrowLeft class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
@@ -93,9 +93,11 @@ const handleSubmit = async () => {
         </div>
 
         <!-- Error Message -->
-        <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200 text-center">
+        <Transition name="page-transition">
+          <div v-if="errorMessage" class="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg border border-red-200 text-center">
           {{ errorMessage }}
-        </div>
+          </div>
+        </Transition>
 
         <!-- SignUp Form -->
         <form class="space-y-3" @submit.prevent="handleSubmit">
@@ -104,7 +106,7 @@ const handleSubmit = async () => {
             <label class="block text-xs font-semibold text-gray-700 mb-1" for="email">Email</label>
             <input 
               v-model="form.email"
-              class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/20 outline-none transition-all duration-200 text-sm" 
+              class="auth-input w-full px-3 py-2 rounded-lg border bg-white/70 focus:bg-white outline-none text-sm"
               id="email" 
               type="email" 
               placeholder="Enter your email" 
@@ -118,7 +120,7 @@ const handleSubmit = async () => {
               <label class="block text-xs font-semibold text-gray-700 mb-1" for="fullName">Full Name</label>
               <input 
                 v-model="form.fullName"
-                class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/20 outline-none transition-all duration-200 text-sm" 
+                class="auth-input w-full px-3 py-2 rounded-lg border bg-white/70 focus:bg-white outline-none text-sm"
                 id="fullName" 
                 type="text" 
                 placeholder="Enter your full name" 
@@ -146,7 +148,7 @@ const handleSubmit = async () => {
               <input 
                 v-model="form.password"
                 :type="showPassword ? 'text' : 'password'"
-                class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-[#8b5cf6] focus:ring-2 focus:ring-[#8b5cf6]/20 outline-none transition-all duration-200 text-sm pr-10" 
+                class="auth-input w-full px-3 py-2 rounded-lg border bg-white/70 focus:bg-white outline-none text-sm pr-10"
                 id="password" 
                 placeholder="Create a password" 
                 required 
@@ -173,7 +175,7 @@ const handleSubmit = async () => {
           <!-- Submit Button -->
           <div class="pt-1">
             <button 
-              class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-[#8b5cf6] hover:bg-[#7c3aed] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#8b5cf6] transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed" 
+              class="brand-button w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
               type="submit"
               :disabled="isSubmitting"
             >

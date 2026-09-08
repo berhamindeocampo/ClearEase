@@ -81,7 +81,7 @@ const handleLogIn = async (): Promise<void> => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-5">
+  <div class="auth-shell min-h-screen flex items-center justify-center px-4 py-5">
     <div class="w-full max-w-[440px]">
       <router-link to="/" class="group mb-3 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/70 px-3.5 py-2 text-sm font-semibold text-purple-700 shadow-sm backdrop-blur transition hover:border-purple-300 hover:bg-white hover:text-purple-900 hover:shadow-md">
         <ArrowLeft class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
@@ -96,7 +96,7 @@ const handleLogIn = async (): Promise<void> => {
           />
       </div>
 
-      <div class="mx-auto w-full rounded-[26px] bg-white/95 p-5 shadow-[0_18px_40px_rgba(56,34,75,0.12)] sm:p-7">
+      <div class="auth-card mx-auto w-full rounded-[26px] p-5 sm:p-7">
         <div class="mb-3 flex justify-center">
           <img
               :src="cleareaseLogo"
@@ -121,7 +121,7 @@ const handleLogIn = async (): Promise<void> => {
               type="text"
               placeholder="Enter username or email"
               required
-              class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:border-purple-500"
+              class="auth-input w-full rounded-lg border-2 bg-white/80 px-3 py-2.5 text-sm text-gray-800 outline-none"
             />
             <span v-if="errors.email" class="mt-1 block text-xs text-red-500">
               {{ errors.email }}
@@ -139,7 +139,7 @@ const handleLogIn = async (): Promise<void> => {
                 :type="showPassword ? 'text' : 'password'"
                 placeholder="Enter your password"
                 required
-                class="w-full rounded-lg border-2 border-purple-300 bg-white px-3 py-2.5 pr-12 text-sm text-gray-800 outline-none transition focus:border-purple-500"
+                class="auth-input w-full rounded-lg border-2 bg-white/80 px-3 py-2.5 pr-12 text-sm text-gray-800 outline-none"
               />
               <button
                 type="button"
@@ -182,7 +182,7 @@ const handleLogIn = async (): Promise<void> => {
           <button
             type="submit"
             :disabled="isLoading"
-            class="w-full rounded-xl bg-[#7a4ed6] py-2.5 text-base font-bold text-white shadow-lg shadow-purple-200 transition hover:bg-[#6c41ca] disabled:cursor-not-allowed disabled:opacity-80"
+            class="brand-button w-full rounded-xl py-2.5 text-base font-bold text-white disabled:cursor-not-allowed disabled:opacity-80"
           >
             <span v-if="isLoading">Logging in...</span>
             <span v-else>Log In</span>

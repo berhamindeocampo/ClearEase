@@ -49,18 +49,8 @@ interface PasswordFormState {
 const showPasswordForm = ref<boolean>(false);
 const errorMessage = ref<string>('');
 const profileMessage = ref<string>('')
+const isLoadingProfile = ref(false)
 const gradeLevelOptions = ['N/A', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
-const sectionOptions = computed(() => {
-  if (['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].includes(student.value.gradeLevel)) {
-    return ['N/A', 'Section A', 'Section B', 'Section C']
-  }
-
-  if (['Grade 11', 'Grade 12'].includes(student.value.gradeLevel)) {
-    return ['N/A', 'STEM', 'GAS']
-  }
-
-  return ['N/A']
-})
 
 const student = ref<StudentProfile>({
   fullName: 'Student',
@@ -72,6 +62,18 @@ const student = ref<StudentProfile>({
   contactNumber: '+63 000 000 0000',
   password: ''
 });
+
+const sectionOptions = computed(() => {
+  if (['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].includes(student.value.gradeLevel)) {
+    return ['N/A', 'Section A', 'Section B', 'Section C']
+  }
+
+  if (['Grade 11', 'Grade 12'].includes(student.value.gradeLevel)) {
+    return ['N/A', 'STEM', 'GAS']
+  }
+
+  return ['N/A']
+})
 
 const syncStudentFromSession = () => {
   const sessionUser = getSessionUser()
@@ -95,19 +97,32 @@ const syncStudentFromSession = () => {
 const loadProfile = async () => {
   if (!supabase) return
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return
+  isLoadingProfile.value = true
 
-  const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
-  if (error || !data) return
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
 
-  student.value.fullName = String(data.full_name || student.value.fullName)
-  student.value.studentId = String(data.student_id || student.value.studentId)
-  student.value.gradeLevel = String(data.grade_level || 'N/A')
-  student.value.section = String(data.section || 'N/A')
-  student.value.contactNumber = String(data.contact_number || 'N/A')
-  student.value.email = String(data.email || user.email || student.value.email)
-  student.value.initials = getInitials(student.value.fullName)
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+    if (error) {
+      profileMessage.value = 'Profile details could not be loaded. Showing saved details instead.'
+      return
+    }
+
+    if (!data) return
+
+    student.value.fullName = String(data.full_name || student.value.fullName)
+    student.value.studentId = String(data.student_id || student.value.studentId)
+    student.value.gradeLevel = String(data.grade_level || 'N/A')
+    student.value.section = String(data.section || 'N/A')
+    student.value.contactNumber = String(data.contact_number || 'N/A')
+    student.value.email = String(data.email || user.email || student.value.email)
+    student.value.initials = getInitials(student.value.fullName)
+  } catch {
+    profileMessage.value = 'Profile details could not be loaded. Showing saved details instead.'
+  } finally {
+    isLoadingProfile.value = false
+  }
 }
 
 const toggleProfileEdit = () => {
@@ -239,7 +254,10 @@ const handleLogOut = async () => {
 <template>
   <div class="min-h-screen bg-gray-100 font-sans">
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <main class="max-w-7xl mx-auto min-h-[calc(100vh-10rem)] py-8 px-4 sm:px-6 lg:px-8">
+      <div v-if="isLoadingProfile" class="mb-6 rounded-lg border border-purple-100 bg-purple-50 px-4 py-3 text-sm text-purple-700">
+        Loading your profile...
+      </div>
       
       <!-- Profile Header (Avatar & Basic Info) -->
       <div class="bg-white rounded-lg shadow p-6 mb-6 flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
