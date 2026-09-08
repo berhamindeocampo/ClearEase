@@ -52,11 +52,13 @@ async function loadRequirements() {
     const classAssignments = (classAssignmentsResult.data ?? []) as Record<string, any>[]
     const enrolledDepartmentIds = new Set(((enrolledDepartmentsResult.data ?? []) as Record<string, any>[]).map((row) => String(row.department_id)))
     const studentAssignments = new Set(((studentAssignmentsResult.data ?? []) as Record<string, any>[]).map((row) => String(row.requirement_id)))
-    const studentClass = classAssignments.filter((row) => String(row.grade_level || '') === String(profile?.grade_level || '') && String(row.section || '') === String(profile?.section || ''))
+    const gradeLevel = String(profile?.grade_level || '').trim()
+    const section = String(profile?.section || '').trim()
+    const hasClassProfile = ['Grade 11', 'Grade 12'].includes(gradeLevel) && ['STEM', 'GAS'].includes(section)
+    const studentClass = classAssignments.filter((row) => String(row.grade_level || '').trim() === gradeLevel && String(row.section || '').trim() === section)
     const assignedRequirementIds = new Set(studentClass.map((row) => String(row.requirement_id)))
     studentAssignments.forEach((id) => assignedRequirementIds.add(id))
     studentSubmissions.forEach((submission) => assignedRequirementIds.add(String(submission.requirement_id)))
-    const hasAssignments = assignedRequirementIds.size > 0 || enrolledDepartmentIds.size > 0
     requirements.value = requirementsResult.data.map((row, index) => {
       const submission = studentSubmissions.find((item) => String(item.requirement_id) === String(row.id))
       return {
@@ -72,7 +74,7 @@ async function loadRequirements() {
         filePath: String(submission?.file_path || ''),
         icon: iconFor(String(row.title || row.name || '')),
       }
-    }).filter((item) => !hasAssignments || assignedRequirementIds.has(item.id) || enrolledDepartmentIds.has(item.departmentId))
+    }).filter((item) => hasClassProfile && (assignedRequirementIds.has(item.id) || enrolledDepartmentIds.has(item.departmentId)))
   } catch (error: any) {
     loadError.value = error?.message || 'Requirements could not be loaded.'
   } finally {
