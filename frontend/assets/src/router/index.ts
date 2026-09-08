@@ -10,7 +10,6 @@ import Profiles from '../student_pages/StudentProfiles.vue'
 import AdminDashboard from '../admin_pages/AdminDashboard.vue'
 import AdminAccounts from '../admin_pages/AdminAccounts.vue'
 import AdminDepartment from '../admin_pages/AdminDepartment.vue'
-import AdminStudentList from '../admin_pages/AdminStudentList.vue'
 import SPRequirements from '../school_personnel_pages/SP_Requirements.vue'
 import SPClearances from '../school_personnel_pages/SP_Clearances.vue'
 import SPClassList from '../school_personnel_pages/SP_ClassList.vue'
@@ -149,11 +148,6 @@ const router = createRouter({
       path: '/admin/department',
       name: 'admin-department',
       component: AdminDepartment,
-    },
-    {
-      path: '/admin/list',
-      name: 'admin-list',
-      component: AdminStudentList,
     },
     {
       path: '/admin/settings',

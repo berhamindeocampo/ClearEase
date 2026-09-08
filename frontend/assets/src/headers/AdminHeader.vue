@@ -18,8 +18,7 @@ const navItems: NavItem[] = [
   { id: 1, label: 'Dashboard', path: '/admindashboard' },
   { id: 2, label: 'Accounts', path: '/admin/accounts' },
   { id: 3, label: 'Department', path: '/admin/department' },
-  { id: 4, label: 'List', path: '/admin/list' },
-  { id: 5, label: 'Settings', path: '/admin/settings' }
+  { id: 4, label: 'Settings', path: '/admin/settings' }
 ]
 
 const isActive = (path: string): boolean => {
