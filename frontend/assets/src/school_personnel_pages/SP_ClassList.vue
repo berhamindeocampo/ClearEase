@@ -34,11 +34,7 @@ const searchQuery = ref('')
 const selectedClass = ref('all')
 const isLoading = ref(true)
 const loadError = ref('')
-const selectedStudent = ref<Student | null>(null)
-const showStudentEditor = ref(false)
-const showRequirementEditor = ref(false)
 const showClassRequirementEditor = ref(false)
-const selectedRequirementId = ref('')
 const selectedClassRequirementId = ref('')
 const isSaving = ref(false)
 const successMessage = ref('')
@@ -191,62 +187,10 @@ const loadClassList = async () => {
   isLoading.value = false
 }
 
-const openStudentEditor = (student: Student) => {
-  selectedStudent.value = { ...student }
-  successMessage.value = ''
-  showStudentEditor.value = true
-}
-
-const openRequirementEditor = (student: Student) => {
-  selectedStudent.value = student
-  selectedRequirementId.value = ''
-  successMessage.value = ''
-  showRequirementEditor.value = true
-}
-
 const openClassRequirementEditor = () => {
   selectedClassRequirementId.value = ''
   successMessage.value = ''
   showClassRequirementEditor.value = true
-}
-
-const saveStudent = async () => {
-  if (!supabase || !selectedStudent.value) return
-  isSaving.value = true
-  loadError.value = ''
-  const student = selectedStudent.value
-  const { error } = await supabase.from('profiles').update({
-    grade_level: student.gradeLevel,
-    section: student.section,
-  }).eq('id', student.id)
-
-  if (error) {
-    loadError.value = error.message
-  } else {
-    const index = students.value.findIndex((item) => item.id === student.id)
-    if (index >= 0) students.value[index] = { ...student }
-    showStudentEditor.value = false
-    successMessage.value = `${student.fullName}'s class was updated.`
-  }
-  isSaving.value = false
-}
-
-const addRequirement = async () => {
-  if (!supabase || !selectedStudent.value || !selectedRequirementId.value) return
-  isSaving.value = true
-  loadError.value = ''
-  const { error } = await supabase.rpc('assign_student_requirement', {
-    p_student_id: selectedStudent.value.id,
-    p_requirement_id: selectedRequirementId.value,
-  })
-
-  if (error) {
-    loadError.value = error.message
-  } else {
-    showRequirementEditor.value = false
-    successMessage.value = `Requirement added for ${selectedStudent.value.fullName}.`
-  }
-  isSaving.value = false
 }
 
 const addClassRequirement = async () => {
@@ -321,39 +265,17 @@ onMounted(loadClassList)
           </div>
           <div class="overflow-x-auto">
             <div class="min-w-[860px]">
-              <div class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr_1.4fr] gap-3 border-b border-[#edf0f4] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600"><div>Student</div><div>School ID</div><div>Class</div><div>Status</div><div class="text-right">Actions</div></div>
+              <div class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr] gap-3 border-b border-[#edf0f4] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600"><div>Student</div><div>School ID</div><div>Class</div><div>Status</div></div>
               <div v-if="subjectGroups[0].students.length === 0" class="px-5 py-8 text-center text-sm text-slate-500">No students match your search in this subject.</div>
-              <div v-for="student in subjectGroups[0].students" v-else :key="student.id" class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr_1.4fr] items-center gap-3 border-b border-[#edf0f4] px-5 py-4 text-sm last:border-b-0">
+              <div v-for="student in subjectGroups[0].students" v-else :key="student.id" class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr] items-center gap-3 border-b border-[#edf0f4] px-5 py-4 text-sm last:border-b-0">
                 <div class="flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#eee7ff] font-bold text-[#7c4fe0]">{{ student.fullName.split(' ').map((part) => part[0]).slice(0, 2).join('') }}</div><div><p class="font-semibold text-slate-900">{{ student.fullName }}</p><p class="text-xs text-slate-500">{{ student.email }}</p></div></div>
                 <div class="text-slate-600">{{ student.studentId }}</div><div><p class="font-medium">{{ student.gradeLevel }}</p><p class="text-xs text-slate-500">{{ student.section }}</p></div><div><span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span></div>
-                <div class="flex justify-end gap-2"><button class="rounded-lg border border-[#8d63e8] px-3 py-2 text-xs font-semibold text-[#7c4fe0] transition hover:bg-[#f3ebff]" @click="openStudentEditor(student)">Edit Student</button><button class="rounded-lg bg-[#8d63e8] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#7f55dd]" @click="openRequirementEditor(student)">+ Requirement</button></div>
               </div>
             </div>
           </div>
         </section>
       </div>
     </main>
-
-    <div v-if="showStudentEditor && selectedStudent" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="showStudentEditor = false">
-      <form class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @submit.prevent="saveStudent">
-        <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Edit Student Class</h2><button type="button" aria-label="Close" @click="showStudentEditor = false"><X class="h-5 w-5 text-slate-400" /></button></div>
-        <p class="mt-1 text-sm text-slate-500">{{ selectedStudent.fullName }}</p>
-        <div class="mt-5 grid gap-4 sm:grid-cols-2">
-          <label class="text-sm font-semibold">Grade level<select v-model="selectedStudent.gradeLevel" class="mt-1 w-full rounded-lg border px-3 py-2 font-normal"><option v-for="grade in ['N/A', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']" :key="grade">{{ grade }}</option></select></label>
-          <label class="text-sm font-semibold">Section<input v-model="selectedStudent.section" class="mt-1 w-full rounded-lg border px-3 py-2 font-normal" placeholder="Section A" /></label>
-        </div>
-        <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-lg border px-4 py-2 text-sm" @click="showStudentEditor = false">Cancel</button><button class="rounded-lg bg-[#8d63e8] px-4 py-2 text-sm font-semibold text-white" :disabled="isSaving">{{ isSaving ? 'Saving...' : 'Save Changes' }}</button></div>
-      </form>
-    </div>
-
-    <div v-if="showRequirementEditor && selectedStudent" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="showRequirementEditor = false">
-      <form class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @submit.prevent="addRequirement">
-        <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Add Student Requirement</h2><button type="button" aria-label="Close" @click="showRequirementEditor = false"><X class="h-5 w-5 text-slate-400" /></button></div>
-        <p class="mt-1 text-sm text-slate-500">This extra requirement will be visible to {{ selectedStudent.fullName }}.</p>
-        <select v-model="selectedRequirementId" required class="mt-5 w-full rounded-lg border px-3 py-2 text-sm"><option value="" disabled>Select a requirement</option><option v-for="requirement in requirements" :key="requirement.id" :value="requirement.id">{{ requirement.title }} · {{ requirement.department }}</option></select>
-        <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-lg border px-4 py-2 text-sm" @click="showRequirementEditor = false">Cancel</button><button class="rounded-lg bg-[#8d63e8] px-4 py-2 text-sm font-semibold text-white" :disabled="isSaving">{{ isSaving ? 'Adding...' : 'Add Requirement' }}</button></div>
-      </form>
-    </div>
 
     <div v-if="showClassRequirementEditor" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="showClassRequirementEditor = false">
       <form class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @submit.prevent="addClassRequirement">
