@@ -10,6 +10,7 @@ interface Activity {
   id: string | number
   title: string
   department: string
+  remarks: string
   status: 'Approved' | 'Pending' | 'Rejected'
   type: 'approved' | 'pending' | 'rejected'
   date: string
@@ -25,6 +26,7 @@ const requirementsRejected = ref(0)
 const daysRemaining = ref(0)
 const lastUpdated = ref('—')
 const activePopup = ref<'activity' | null>(null)
+const selectedActivity = ref<Activity | null>(null)
 const activityError = ref('')
 const router = useRouter()
 const { getCurrentUser } = useAuth()
@@ -71,12 +73,22 @@ onMounted(async () => {
 const recentActivities = ref<Activity[]>([])
 
 async function loadActivities() {
-  const submissionsResult = supabase
-    ? await supabase.rpc('get_my_clearance_submissions')
-    : { data: [], error: { message: 'Supabase is not configured.' } }
+  const [submissionsResult, requirementsResult, departmentsResult] = await Promise.all([
+    supabase
+      ? supabase.rpc('get_my_clearance_submissions')
+      : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
+    fetchRows('requirements'),
+    fetchRows('departments'),
+  ])
   const currentUser = await getCurrentUser()
   const submissionRows = (submissionsResult.data ?? []) as Record<string, any>[]
   const submissions = submissionRows.filter((row: Record<string, unknown>) => !currentUser || String(row.student_id) === String(currentUser.id))
+  const departmentNames = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.name || department.title || 'Subject')]))
+  const subjectNames = new Map(requirementsResult.data.map((requirement) => [
+    String(requirement.id),
+    departmentNames.get(String(requirement.department_id)) || String(requirement.department_name || requirement.department || 'Subject'),
+  ]))
+  const subjectFor = (row: Record<string, any>) => subjectNames.get(String(row.requirement_id)) || String(row.department_name || row.department || row.title || row.requirement_name || 'Subject')
   const sortedSubmissions = [...submissions].sort((left, right) => {
     const leftTime = new Date(String(left.updated_at || left.created_at || 0)).getTime()
     const rightTime = new Date(String(right.updated_at || right.created_at || 0)).getTime()
@@ -106,8 +118,9 @@ async function loadActivities() {
       const timestamp = new Date(String(row.updated_at || row.created_at || 0)).getTime()
       return {
         id: row.id || index,
-        title: String(row.remarks || row.title || row.requirement_name || 'Clearance update'),
+        title: subjectFor(row),
         department: String(row.department_name || row.department || '—'),
+        remarks: String(row.remarks || 'No remarks provided.'),
         status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
         type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
         date: displayDate(row.updated_at || row.created_at),
@@ -127,8 +140,9 @@ async function loadActivities() {
     const timestamp = new Date(String(row.created_at || row.updated_at || 0)).getTime()
     return {
       id: row.id || index,
-      title: String(row.title || row.description || 'Activity update'),
+      title: subjectFor(row),
       department: String(row.department_name || row.department || '—'),
+      remarks: String(row.remarks || row.description || 'No remarks provided.'),
       status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
       type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
       date: displayDate(row.created_at),
@@ -150,6 +164,10 @@ const toggleProfile = () => {
 
 const viewAllActivity = () => {
   activePopup.value = 'activity'
+}
+
+const viewActivityDetails = (activity: Activity) => {
+  selectedActivity.value = activity
 }
 
 const getActivityIconClasses = (type: string): string => {
@@ -245,7 +263,7 @@ button {
       </div>
 
       <div class="divide-y divide-slate-300">
-        <div v-for="activity in recentActivities" :key="activity.id" class="flex items-center justify-between px-5 py-4 transition-colors hover:bg-slate-50">
+        <div v-for="activity in recentActivities" :key="activity.id" class="flex cursor-pointer items-center justify-between px-5 py-4 transition-colors hover:bg-slate-50" role="button" tabindex="0" @click="viewActivityDetails(activity)" @keyup.enter="viewActivityDetails(activity)">
           <div class="flex items-center gap-4">
             <div :class="['h-10 w-10 rounded-full border flex items-center justify-center', getActivityIconClasses(activity.type)]">
               <component :is="getActivityIcon(activity.type)" class="h-5 w-5 stroke-[2.5]" />
@@ -265,5 +283,23 @@ button {
     </div>
 
     <StudentViewAllPopup v-if="activePopup === 'activity'" :activities="recentActivities" @close="activePopup = null" />
+
+    <div v-if="selectedActivity" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="selectedActivity = null">
+      <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-label="Activity details">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-300 pb-4">
+          <div>
+            <p class="text-xs font-bold uppercase tracking-[0.16em] text-purple-600">Activity details</p>
+            <h2 class="mt-1 text-xl font-bold text-slate-900">{{ selectedActivity.title }}</h2>
+          </div>
+          <button class="text-2xl leading-none text-slate-400 hover:text-slate-700" aria-label="Close" @click="selectedActivity = null">&times;</button>
+        </div>
+        <div class="mt-5 space-y-3 text-sm">
+          <div class="flex justify-between gap-4"><span class="text-slate-500">Status</span><span :class="['font-semibold', getStatusColor(selectedActivity.status)]">{{ selectedActivity.status }}</span></div>
+          <div class="flex justify-between gap-4"><span class="text-slate-500">Date</span><span class="font-medium text-slate-900">{{ selectedActivity.date }}</span></div>
+          <div><p class="text-slate-500">Remarks from school personnel</p><p class="mt-2 rounded-lg bg-slate-50 p-3 leading-6 text-slate-800">{{ selectedActivity.remarks }}</p></div>
+        </div>
+        <div class="mt-6 flex justify-end"><button class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-700" @click="selectedActivity = null">Close</button></div>
+      </section>
+    </div>
   </section>
 </template>
