@@ -217,18 +217,20 @@ onMounted(loadDepartments)
           <button v-for="section in ['STEM', 'GAS']" :key="section" class="rounded-full border px-3 py-1.5 text-xs font-semibold" :class="activeSection === section ? 'border-[#8d63e8] bg-[#8d63e8] text-white' : 'border-[#d5d7df] bg-white text-slate-600'" @click="activeSection = section as 'STEM' | 'GAS'">{{ section }}</button>
         </div>
 
-        <div class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
+        <div class="grid grid-cols-[1.2fr_1.1fr_0.55fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#aeb6c4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <div>Department</div>
           <div>Adviser</div>
+          <div class="text-center">Students</div>
           <div class="text-right">Action</div>
         </div>
 
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading departments...</div>
         <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
         <div v-else-if="filteredDepartments.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No departments found for {{ activeLevel }}.</div>
-        <div v-for="dept in filteredDepartments" v-else :key="dept.id" class="grid cursor-pointer grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#d9dde5] last:border-b-0 items-center text-xs sm:text-sm text-slate-900 transition hover:bg-[#f7f3ff]" @click="selectedDepartmentDetail = dept">
+        <div v-for="dept in filteredDepartments" v-else :key="dept.id" class="grid cursor-pointer grid-cols-[1.2fr_1.1fr_0.55fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#b8c0cc] last:border-b-0 items-center text-xs sm:text-sm text-slate-900 transition hover:bg-[#f7f3ff]" @click="selectedDepartmentDetail = dept">
           <div class="flex min-w-0 items-center gap-2 font-semibold text-slate-950"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ dept.name }}</span></div>
           <div class="font-medium text-slate-900">{{ dept.adviser }}</div>
+          <div class="text-center font-semibold text-slate-900">{{ dept.studentIds.length }}</div>
           <div class="text-right">
             <button class="mr-2 rounded-lg border border-[#8d63e8] px-2 py-1 text-xs font-semibold text-[#7c4fe0] hover:bg-[#f3edff]" @click.stop="selectedDepartmentDetail = dept">
               List
