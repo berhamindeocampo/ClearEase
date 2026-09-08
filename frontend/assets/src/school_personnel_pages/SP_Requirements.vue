@@ -71,11 +71,26 @@ async function updateRequirement(form: RequirementForm) {
 }
 
 async function loadRequirements() {
-  const [result, departmentsResult] = await Promise.all([fetchRows('requirements'), fetchRows('departments')])
-  loadError.value = result.error || departmentsResult.error || ''
-  departments.value = departmentsResult.data.map((department) => ({ id: String(department.id), name: String(department.name || department.title || department.id) }))
+  const [result, departmentsResult, assignmentsResult, profileResult] = await Promise.all([
+    fetchRows('requirements'),
+    fetchRows('departments'),
+    fetchRows('department_personnel'),
+    supabase ? supabase.rpc('get_my_profile') : Promise.resolve({ data: null, error: null }),
+  ])
+  loadError.value = result.error || departmentsResult.error || assignmentsResult.error || profileResult.error?.message || ''
+  const profileName = String(profileResult.data?.full_name || profileResult.data?.email || '').trim().toLowerCase()
+  const assignedDepartmentIds = new Set([
+    ...assignmentsResult.data.map((assignment) => String(assignment.department_id)),
+    ...departmentsResult.data
+      .filter((department) => String(department.adviser || '').trim().toLowerCase() === profileName)
+      .map((department) => String(department.id)),
+  ])
+  departments.value = departmentsResult.data
+    .filter((department) => assignedDepartmentIds.has(String(department.id)))
+    .map((department) => ({ id: String(department.id), name: String(department.name || department.title || department.id) }))
   const departmentNames = new Map(departments.value.map((department) => [department.id, department.name]))
   requirements.value = result.data
+    .filter((item) => assignedDepartmentIds.has(String(item.department_id)))
     .sort((left, right) => String(right.created_at || '').localeCompare(String(left.created_at || '')))
     .map((item) => ({
     id: String(item.id),
@@ -90,13 +105,24 @@ async function loadRequirements() {
 }
 
 async function openAddRequirement() {
-  const result = await fetchRows('departments')
-  if (result.error) {
-    loadError.value = result.error
+  const [departmentsResult, assignmentsResult, profileResult] = await Promise.all([
+    fetchRows('departments'),
+    fetchRows('department_personnel'),
+    supabase ? supabase.rpc('get_my_profile') : Promise.resolve({ data: null, error: null }),
+  ])
+  if (departmentsResult.error || assignmentsResult.error || profileResult.error) {
+    loadError.value = departmentsResult.error || assignmentsResult.error || profileResult.error?.message || ''
     return
   }
 
-  departments.value = result.data.map((department) => ({
+  const profileName = String(profileResult.data?.full_name || profileResult.data?.email || '').trim().toLowerCase()
+  const assignedDepartmentIds = new Set([
+    ...assignmentsResult.data.map((assignment) => String(assignment.department_id)),
+    ...departmentsResult.data
+      .filter((department) => String(department.adviser || '').trim().toLowerCase() === profileName)
+      .map((department) => String(department.id)),
+  ])
+  departments.value = departmentsResult.data.filter((department) => assignedDepartmentIds.has(String(department.id))).map((department) => ({
     id: String(department.id),
     name: String(department.name || department.title || department.id),
   }))

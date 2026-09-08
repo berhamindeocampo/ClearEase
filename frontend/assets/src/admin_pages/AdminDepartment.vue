@@ -14,6 +14,7 @@ const loadError = ref('')
 const activePopup = ref<'add' | 'manage' | null>(null)
 const selectedDepartment = ref<(typeof departments.value)[number] | null>(null)
 const adviserOptions = ref(['N/A'])
+const adviserIds = ref(new Map<string, string>())
 const activeLevel = ref('Grade 7')
 
 const filteredDepartments = computed(() => departments.value.filter((item) =>
@@ -26,10 +27,25 @@ async function addDepartment(form: { name: string; adviser: string; gradeLevel: 
     return
   }
 
-  const { error } = await supabase.from('departments').insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevel })
+  const { data: createdDepartment, error } = await supabase
+    .from('departments')
+    .insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevel })
+    .select('id')
+    .single()
   if (error) {
     loadError.value = error.message
     return
+  }
+
+  if (createdDepartment && adviserIds.value.has(form.adviser)) {
+    const { error: assignmentError } = await supabase.from('department_personnel').insert({
+      department_id: createdDepartment.id,
+      personnel_id: adviserIds.value.get(form.adviser),
+    })
+    if (assignmentError) {
+      loadError.value = assignmentError.message
+      return
+    }
   }
 
   activePopup.value = null
@@ -65,6 +81,23 @@ async function updateDepartment(departmentId: string, name: string, adviser: str
     return
   }
 
+  const { error: clearAssignmentError } = await supabase.from('department_personnel').delete().eq('department_id', departmentId)
+  if (clearAssignmentError) {
+    loadError.value = clearAssignmentError.message
+    return
+  }
+
+  if (adviserIds.value.has(adviser)) {
+    const { error: assignmentError } = await supabase.from('department_personnel').insert({
+      department_id: departmentId,
+      personnel_id: adviserIds.value.get(adviser),
+    })
+    if (assignmentError) {
+      loadError.value = assignmentError.message
+      return
+    }
+  }
+
   activePopup.value = null
   selectedDepartment.value = null
   await loadDepartments()
@@ -74,13 +107,20 @@ async function loadDepartments() {
   const [departmentResult, requirementResult, profilesResult] = await Promise.all([
     fetchRows('departments'),
     fetchRows('requirements'),
-    fetchRows('profiles'),
+    supabase
+      ? supabase.rpc('get_admin_profiles')
+      : Promise.resolve({ data: null, error: { message: 'Supabase is not configured.' } }),
   ])
-  loadError.value = departmentResult.error || requirementResult.error || profilesResult.error || ''
-  const personnelNames = profilesResult.data
+  loadError.value = departmentResult.error || requirementResult.error || profilesResult.error?.message || ''
+  const personnelProfiles = ((profilesResult.data ?? []) as Record<string, any>[])
     .filter((profile) => String(profile.role || '').trim().toLowerCase() === 'school_personnel')
-    .map((profile) => String(profile.full_name || profile.fullName || profile.name || profile.email || '').trim())
-    .filter(Boolean)
+  const adviserMap = new Map<string, string>()
+  personnelProfiles.forEach((profile) => {
+    const name = String(profile.full_name || profile.fullName || profile.name || profile.email || '').trim()
+    if (name) adviserMap.set(name, String(profile.id))
+  })
+  adviserIds.value = adviserMap
+  const personnelNames = Array.from(adviserIds.value.keys())
   adviserOptions.value = ['N/A', ...Array.from(new Set(personnelNames))]
   departments.value = departmentResult.data.map((department) => {
     const id = department.id

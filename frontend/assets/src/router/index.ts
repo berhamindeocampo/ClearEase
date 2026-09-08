@@ -12,6 +12,7 @@ import AdminAccounts from '../admin_pages/AdminAccounts.vue'
 import AdminDepartment from '../admin_pages/AdminDepartment.vue'
 import SPRequirements from '../school_personnel_pages/SP_Requirements.vue'
 import SPClearances from '../school_personnel_pages/SP_Clearances.vue'
+import SPStudents from '../school_personnel_pages/SP_Students.vue'
 import Settings from '../components/Settings.vue'
 
 const publicRoutes = ['landing', 'login', 'signin']
@@ -116,6 +117,11 @@ const router = createRouter({
       path: '/sp/clearances',
       name: 'sp-clearances',
       component: SPClearances,
+    },
+    {
+      path: '/sp/students',
+      name: 'sp-students',
+      component: SPStudents,
     },
     {
       path: '/sp/settings',

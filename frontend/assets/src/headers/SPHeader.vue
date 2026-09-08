@@ -17,7 +17,8 @@ const isMobileMenuOpen = ref(false)
 const navItems: NavItem[] = [
   { id: 1, label: 'Requirements', path: '/sp/requirements' },
   { id: 2, label: 'Clearances', path: '/sp/clearances' },
-  { id: 3, label: 'Settings', path: '/sp/settings' }
+  { id: 3, label: 'Students', path: '/sp/students' },
+  { id: 4, label: 'Settings', path: '/sp/settings' }
 ]
 
 const isActive = (path: string): boolean => {
