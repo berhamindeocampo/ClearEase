@@ -11,7 +11,7 @@ const stats = ref([
   { value: 0, label: 'For Action', icon: '!', tone: 'red' },
 ])
 
-const clearances = ref<Array<{ id: string; student: string; requirement: string; department: string; submitted: string; status: string; fileName?: string; remarks: string }>>([])
+const clearances = ref<Array<{ id: string; student: string; requirement: string; department: string; submitted: string; status: string; fileName?: string; filePath?: string; remarks: string }>>([])
 const selectedClearance = ref<(typeof clearances.value)[number] | null>(null)
 const searchQuery = ref('')
 const selectedStatus = ref('all')
@@ -53,6 +53,7 @@ async function loadClearances() {
     department: String(row.department_name || departmentNames.get(String(requirements.get(String(row.requirement_id))?.department_id)) || row.department || '—'),
     submitted: relativeDate(row.submitted_at || row.created_at),
     fileName: row.file_name ? String(row.file_name) : undefined,
+    filePath: row.file_path ? String(row.file_path) : undefined,
     remarks: String(row.remarks || ''),
     status: status(row).toLowerCase() === 'approved' ? 'Approved' : status(row).toLowerCase() === 'rejected' ? 'Rejected' : status(row).toLowerCase() === 'in review' ? 'In Review' : 'Pending',
   }))
