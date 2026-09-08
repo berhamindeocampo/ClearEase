@@ -123,7 +123,10 @@ const loadClassList = async () => {
 
   // If class memberships have not been created yet, keep the assigned staff
   // workspace useful by showing the available student profiles for their departments.
-  if (studentDepartmentIds.size === 0 && assignedDepartmentIds.size > 0) {
+  const hasVisibleStudentProfile = profilesResult.data.some((profile) =>
+    String(profile.role || '').toLowerCase() === 'student' && studentDepartmentIds.has(String(profile.id)),
+  )
+  if (!hasVisibleStudentProfile && assignedDepartmentIds.size > 0) {
     profilesResult.data
       .filter((profile) => String(profile.role || '').toLowerCase() === 'student')
       .forEach((profile) => studentDepartmentIds.set(String(profile.id), [...assignedDepartmentIds]))
@@ -141,6 +144,10 @@ const loadClassList = async () => {
       departmentIds: studentDepartmentIds.get(String(row.id)) || [],
     }))
     .sort((left: Student, right: Student) => left.fullName.localeCompare(right.fullName))
+
+  if (!loadError.value && assignedDepartmentIds.size === 0) {
+    loadError.value = 'No department is assigned to this school personnel account. Ask an admin to assign a department and refresh this page.'
+  }
 
   requirements.value = requirementsResult.data.map((row) => ({
     id: String(row.id),
