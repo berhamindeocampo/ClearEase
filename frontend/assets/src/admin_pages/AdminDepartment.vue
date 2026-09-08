@@ -6,9 +6,9 @@ import AdminManagePopup from '../popups/AdminManagePopup.vue'
 import { supabase } from '../composables/auth'
 import { fetchRows } from '../lib/database'
 
-const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'Others']
+const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
 type StudentOption = { id: string; name: string; studentId: string; gradeLevel: string; section: string }
-const departments = ref<Array<{ id: string; name: string; adviser: string; gradeLevel: string; requirement: string; requirements: string[]; action: string; studentIds: string[] }>>([])
+const departments = ref<Array<{ id: string; name: string; adviser: string; gradeLevel: string; section: string; requirement: string; requirements: string[]; action: string; studentIds: string[] }>>([])
 const searchQuery = ref('')
 const isLoading = ref(true)
 const loadError = ref('')
@@ -20,12 +20,15 @@ const adviserOptions = ref(['N/A'])
 const studentOptions = ref<StudentOption[]>([])
 const adviserIds = ref(new Map<string, string>())
 const activeLevel = ref('Grade 7')
+const activeSection = ref<'STEM' | 'GAS'>('STEM')
 
 const filteredDepartments = computed(() => departments.value.filter((item) =>
-  item.gradeLevel === activeLevel.value && item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  item.gradeLevel.split(',').map((level) => level.trim()).includes(activeLevel.value) &&
+  (activeLevel.value !== 'Grade 11' && activeLevel.value !== 'Grade 12' || item.section === activeSection.value) &&
+  item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
 ))
 
-async function addDepartment(form: { name: string; adviser: string; gradeLevel: string }) {
+async function addDepartment(form: { name: string; adviser: string; gradeLevels: string[]; section: string }) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
@@ -33,7 +36,7 @@ async function addDepartment(form: { name: string; adviser: string; gradeLevel: 
 
   const { data: createdDepartment, error } = await supabase
     .from('departments')
-    .insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevel })
+    .insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevels.join(', '), section: form.section })
     .select('id')
     .single()
   if (error) {
@@ -73,14 +76,14 @@ async function deleteDepartment(departmentId: string) {
   await loadDepartments()
 }
 
-async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevel: string, studentIds: string[]) {
+async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevels: string[], section: string, studentIds: string[]) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
   }
 
   saveError.value = ''
-  const { error } = await supabase.from('departments').update({ name, adviser, grade_level: gradeLevel }).eq('id', departmentId)
+  const { error } = await supabase.from('departments').update({ name, adviser, grade_level: gradeLevels.join(', '), section }).eq('id', departmentId)
   if (error) {
     saveError.value = error.message
     return
@@ -178,6 +181,7 @@ async function loadDepartments() {
       name: String(department.name || department.title || id),
       adviser: String(department.adviser || '').trim() || 'N/A',
       gradeLevel: String(department.grade_level || 'Others'),
+      section: String(department.section || 'N/A'),
       requirement: departmentRequirements[0] || '—',
       requirements: departmentRequirements,
       action: 'Manage',
@@ -211,9 +215,12 @@ onMounted(loadDepartments)
         </div>
 
         <div class="flex gap-2 overflow-x-auto border-b border-[#edf0f4] px-4 sm:px-5 py-3">
-          <button v-for="level in levelOptions" :key="level" class="whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold" :class="activeLevel === level ? 'border-[#8d63e8] bg-[#8d63e8] text-white' : 'border-[#d5d7df] bg-white text-slate-600'" @click="activeLevel = level">
+          <button v-for="level in levelOptions" :key="level" class="whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold" :class="activeLevel === level ? 'border-[#8d63e8] bg-[#8d63e8] text-white' : 'border-[#d5d7df] bg-white text-slate-600'" @click="activeLevel = level; activeSection = 'STEM'">
             {{ level }}
           </button>
+        </div>
+        <div v-if="activeLevel === 'Grade 11' || activeLevel === 'Grade 12'" class="flex gap-2 border-b border-[#edf0f4] px-4 py-3 sm:px-5">
+          <button v-for="section in ['STEM', 'GAS']" :key="section" class="rounded-full border px-3 py-1.5 text-xs font-semibold" :class="activeSection === section ? 'border-[#8d63e8] bg-[#8d63e8] text-white' : 'border-[#d5d7df] bg-white text-slate-600'" @click="activeSection = section as 'STEM' | 'GAS'">{{ section }}</button>
         </div>
 
         <div class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">

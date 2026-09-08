@@ -2,12 +2,13 @@
 import { computed, ref } from 'vue'
 
 type StudentOption = { id: string; name: string; studentId: string; gradeLevel: string; section: string }
-const props = defineProps<{ department: { id: string; name: string; adviser: string; gradeLevel?: string; requirement?: string; studentIds?: string[] }; advisers: string[]; students: StudentOption[]; saveError?: string }>()
-const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'Others']
-const emit = defineEmits<{ (event: 'close'): void; (event: 'delete', id: string): void; (event: 'save', id: string, name: string, adviser: string, gradeLevel: string, studentIds: string[]): void }>()
+const props = defineProps<{ department: { id: string; name: string; adviser: string; gradeLevel?: string; section?: string; requirement?: string; studentIds?: string[] }; advisers: string[]; students: StudentOption[]; saveError?: string }>()
+const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+const emit = defineEmits<{ (event: 'close'): void; (event: 'delete', id: string): void; (event: 'save', id: string, name: string, adviser: string, gradeLevels: string[], section: string, studentIds: string[]): void }>()
 const name = ref(props.department.name)
 const adviser = ref(props.department.adviser)
-const gradeLevel = ref(props.department.gradeLevel || 'Others')
+const gradeLevels = ref((props.department.gradeLevel || 'Grade 7').split(',').map((level) => level.trim()).filter(Boolean))
+const section = ref(props.department.section || 'N/A')
 const selectedStudentIds = ref<string[]>([...(props.department.studentIds || [])])
 const studentSearch = ref('')
 
@@ -23,7 +24,7 @@ function confirmDelete() {
 }
 
 function saveChanges() {
-	if (name.value.trim()) emit('save', props.department.id, name.value.trim(), adviser.value, gradeLevel.value, selectedStudentIds.value)
+	if (name.value.trim() && gradeLevels.value.length) emit('save', props.department.id, name.value.trim(), adviser.value, gradeLevels.value, section.value, selectedStudentIds.value)
 }
 </script>
 <template>
@@ -33,7 +34,8 @@ function saveChanges() {
 			<label for="manage-department-name" class="mt-5 block text-sm font-medium text-slate-700">Department name</label>
 			<input id="manage-department-name" v-model="name" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
 			<label for="manage-department-level" class="mt-4 block text-sm font-medium text-slate-700">Grade level</label>
-			<select id="manage-department-level" v-model="gradeLevel" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="level in levelOptions" :key="level" :value="level">{{ level }}</option></select>
+			<select id="manage-department-level" v-model="gradeLevels" multiple class="mt-1 h-28 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="level in levelOptions" :key="level" :value="level">{{ level }}</option></select>
+			<div v-if="gradeLevels.includes('Grade 11') || gradeLevels.includes('Grade 12')"><label for="manage-department-section" class="mt-4 block text-sm font-medium text-slate-700">Section</label><select id="manage-department-section" v-model="section" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option>N/A</option><option>STEM</option><option>GAS</option></select></div>
 			<label for="manage-department-adviser" class="mt-4 block text-sm font-medium text-slate-700">Adviser</label>
 			<select id="manage-department-adviser" v-model="adviser" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="adviserOption in props.advisers" :key="adviserOption" :value="adviserOption">{{ adviserOption }}</option></select>
 			<div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
