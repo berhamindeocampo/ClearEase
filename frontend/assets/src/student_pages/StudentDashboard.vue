@@ -29,7 +29,6 @@ const daysRemaining = ref(0)
 const lastUpdated = ref('—')
 const activePopup = ref<'activity' | null>(null)
 const selectedActivity = ref<Activity | null>(null)
-const activityError = ref('')
 const router = useRouter()
 const { getCurrentUser } = useAuth()
 
@@ -139,47 +138,19 @@ async function loadActivities() {
     .sort((a, b) => a - b)[0]
   daysRemaining.value = deadline ? Math.max(0, Math.ceil((deadline - Date.now()) / 86400000)) : 0
 
-  const result = await fetchRows('activity_logs')
-  if (result.error || (result.data.length === 0 && relevantSubmissions.length > 0)) {
-    activityError.value = result.error || ''
-    recentActivities.value = sortedSubmissions.slice(0, 5).map((row, index) => {
-      const rawStatus = String(row.status || 'pending').toLowerCase()
-      const status = rawStatus === 'approved' ? 'Approved' : rawStatus === 'rejected' ? 'Rejected' : 'Pending'
-      const timestamp = new Date(String(row.updated_at || row.created_at || 0)).getTime()
-      return {
-        id: row.id || index,
-        title: subjectFor(row),
-        requirement: requirementFor(row),
-        department: String(row.department_name || row.department || '—'),
-        personnel: personnelFor(row),
-        remarks: String(row.remarks || 'No remarks provided.'),
-        status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
-        type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
-        date: displayDate(row.updated_at || row.created_at),
-        timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
-      }
-    })
-    return
-  }
-
-  const sortedActivities = [...result.data].sort((left, right) => {
-    const leftTime = new Date(String(left.created_at || left.updated_at || 0)).getTime()
-    const rightTime = new Date(String(right.created_at || right.updated_at || 0)).getTime()
-    return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime)
-  })
-  recentActivities.value = sortedActivities.slice(0, 5).map((row, index) => {
+  recentActivities.value = sortedSubmissions.slice(0, 5).map((row, index) => {
     const status = String(row.status || 'Pending')
-    const timestamp = new Date(String(row.created_at || row.updated_at || 0)).getTime()
+    const timestamp = new Date(String(row.updated_at || row.created_at || 0)).getTime()
     return {
       id: row.id || index,
       title: subjectFor(row),
       requirement: requirementFor(row),
       department: String(row.department_name || row.department || '—'),
       personnel: personnelFor(row),
-      remarks: String(row.remarks || row.description || 'No remarks provided.'),
+      remarks: String(row.remarks || row.remark || 'No remarks provided.'),
       status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
       type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
-      date: displayDate(row.created_at),
+      date: displayDate(row.updated_at || row.reviewed_at || row.submitted_at || row.created_at),
       timestamp: Number.isNaN(timestamp) ? 0 : timestamp,
     }
   })
