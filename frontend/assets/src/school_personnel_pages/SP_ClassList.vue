@@ -35,7 +35,8 @@ const selectedClass = ref('all')
 const isLoading = ref(true)
 const loadError = ref('')
 const showClassRequirementEditor = ref(false)
-const selectedClassRequirementId = ref('')
+const selectedClassRequirementIds = ref<string[]>([])
+const showClassRequirementMenu = ref(false)
 const isSaving = ref(false)
 const successMessage = ref('')
 
@@ -188,28 +189,40 @@ const loadClassList = async () => {
 }
 
 const openClassRequirementEditor = () => {
-  selectedClassRequirementId.value = ''
+  selectedClassRequirementIds.value = []
+  showClassRequirementMenu.value = false
   successMessage.value = ''
   showClassRequirementEditor.value = true
 }
 
+const toggleClassRequirement = (requirementId: string) => {
+  if (selectedClassRequirementIds.value.includes(requirementId)) {
+    selectedClassRequirementIds.value = selectedClassRequirementIds.value.filter((id) => id !== requirementId)
+  } else {
+    selectedClassRequirementIds.value = [...selectedClassRequirementIds.value, requirementId]
+  }
+}
+
 const addClassRequirement = async () => {
-  if (!supabase || selectedClass.value === 'all' || !selectedClassRequirementId.value) return
+  if (!supabase || selectedClass.value === 'all' || !selectedClassRequirementIds.value.length) return
   const selectedDepartment = departments.value.find((department) => department.id === selectedClass.value)
   if (!selectedDepartment) return
   isSaving.value = true
   loadError.value = ''
-  const { error } = await supabase.from('class_requirements').upsert({
-    grade_level: selectedDepartment.gradeLevel,
-    section: selectedDepartment.section,
-    requirement_id: selectedClassRequirementId.value,
-  }, { onConflict: 'requirement_id,grade_level,section' })
+  const { error } = await supabase.from('class_requirements').upsert(
+    selectedClassRequirementIds.value.map((requirementId) => ({
+      grade_level: selectedDepartment.gradeLevel,
+      section: selectedDepartment.section,
+      requirement_id: requirementId,
+    })),
+    { onConflict: 'requirement_id,grade_level,section' },
+  )
 
   if (error) {
     loadError.value = error.message
   } else {
     showClassRequirementEditor.value = false
-    successMessage.value = `Requirement added for ${selectedDepartment.name}.`
+    successMessage.value = `${selectedClassRequirementIds.value.length} requirements added for ${selectedDepartment.name}.`
   }
   isSaving.value = false
 }
@@ -281,7 +294,12 @@ onMounted(loadClassList)
       <form class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @submit.prevent="addClassRequirement">
         <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Add Requirement to Class</h2><button type="button" aria-label="Close" @click="showClassRequirementEditor = false"><X class="h-5 w-5 text-slate-400" /></button></div>
         <p class="mt-1 text-sm text-slate-500">This will be visible to every student in {{ selectedClassName }}.</p>
-        <select v-model="selectedClassRequirementId" required class="mt-5 w-full rounded-lg border px-3 py-2 text-sm"><option value="" disabled>Select a requirement</option><option v-for="requirement in requirements" :key="requirement.id" :value="requirement.id">{{ requirement.title }} · {{ requirement.department }}</option></select>
+        <div class="relative mt-5">
+          <button type="button" class="flex w-full items-center justify-between rounded-lg border px-3 py-2 text-left text-sm" @click="showClassRequirementMenu = !showClassRequirementMenu"><span>{{ selectedClassRequirementIds.length ? `${selectedClassRequirementIds.length} requirements selected` : 'Select requirements' }}</span><span class="text-slate-400">&#9662;</span></button>
+          <div v-if="showClassRequirementMenu" class="absolute left-0 right-0 z-10 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-300 bg-white p-1 shadow-lg">
+            <label v-for="requirement in requirements" :key="requirement.id" class="flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-slate-50"><input type="checkbox" :checked="selectedClassRequirementIds.includes(requirement.id)" class="h-4 w-4 accent-purple-600" @change="toggleClassRequirement(requirement.id)" /><span>{{ requirement.title }} · {{ requirement.department }}</span></label>
+          </div>
+        </div>
         <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-lg border px-4 py-2 text-sm" @click="showClassRequirementEditor = false">Cancel</button><button class="rounded-lg bg-[#8d63e8] px-4 py-2 text-sm font-semibold text-white" :disabled="isSaving">{{ isSaving ? 'Adding...' : 'Add to Class' }}</button></div>
       </form>
     </div>
