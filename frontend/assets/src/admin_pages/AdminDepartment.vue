@@ -83,34 +83,17 @@ async function deleteDepartment(departmentId: string) {
   await loadDepartments()
 }
 
-async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevels: string[], sections: string[], studentIds: string[]) {
+async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevels: string[], sections: string[]) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
   }
 
   saveError.value = ''
-  const uniqueStudentIds = Array.from(new Set(studentIds))
   const { error } = await supabase.from('departments').update({ name, adviser, grade_level: gradeLevels.join(', '), section: sections.join(', ') }).eq('id', departmentId)
   if (error) {
     saveError.value = error.message
     return
-  }
-
-  const { error: membershipDeleteError } = await supabase.from('department_students').delete().eq('department_id', departmentId)
-  if (membershipDeleteError) {
-    saveError.value = `Students could not be saved: ${membershipDeleteError.message}`
-    return
-  }
-
-  if (uniqueStudentIds.length > 0) {
-    const { error: membershipInsertError } = await supabase.from('department_students').insert(
-      uniqueStudentIds.map((studentId) => ({ department_id: departmentId, student_id: studentId })),
-    )
-    if (membershipInsertError) {
-      saveError.value = `Students could not be saved: ${membershipInsertError.message}`
-      return
-    }
   }
 
   const { error: clearAssignmentError } = await supabase.from('department_personnel').delete().eq('department_id', departmentId)
@@ -258,7 +241,7 @@ onMounted(loadDepartments)
       </div>
     </main>
     <AdminAddDepartmentPopup v-if="activePopup === 'add'" :advisers="adviserOptions" @close="activePopup = null" @save="addDepartment" />
-    <AdminManagePopup v-if="activePopup === 'manage' && selectedDepartment" :department="selectedDepartment" :advisers="adviserOptions" :students="studentOptions" :save-error="saveError" @close="activePopup = null; selectedDepartment = null; saveError = ''" @delete="deleteDepartment" @save="updateDepartment" />
+    <AdminManagePopup v-if="activePopup === 'manage' && selectedDepartment" :department="selectedDepartment" :advisers="adviserOptions" :save-error="saveError" @close="activePopup = null; selectedDepartment = null; saveError = ''" @delete="deleteDepartment" @save="updateDepartment" />
 
     <div v-if="selectedDepartmentDetail" class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/40 p-4" @click.self="selectedDepartmentDetail = null">
       <section class="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="department-detail-title">

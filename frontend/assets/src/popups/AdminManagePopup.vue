@@ -1,21 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
-type StudentOption = { id: string; name: string; studentId: string; gradeLevel: string; section: string }
-const props = defineProps<{ department: { id: string; name: string; adviser: string; gradeLevel?: string; section?: string; requirement?: string; studentIds?: string[] }; advisers: string[]; students: StudentOption[]; saveError?: string }>()
+const props = defineProps<{ department: { id: string; name: string; adviser: string; gradeLevel?: string; section?: string; requirement?: string }; advisers: string[]; saveError?: string }>()
 const levelOptions = ['Grade 11', 'Grade 12']
-const emit = defineEmits<{ (event: 'close'): void; (event: 'delete', id: string): void; (event: 'save', id: string, name: string, adviser: string, gradeLevels: string[], sections: string[], studentIds: string[]): void }>()
+const emit = defineEmits<{ (event: 'close'): void; (event: 'delete', id: string): void; (event: 'save', id: string, name: string, adviser: string, gradeLevels: string[], sections: string[]): void }>()
 const name = ref(props.department.name)
 const adviser = ref(props.department.adviser)
-const gradeLevels = ref((props.department.gradeLevel || 'Grade 11').split(',').map((level) => level.trim()).filter((level) => level === 'Grade 11' || level === 'Grade 12'))
-const sections = ref((props.department.section || 'N/A').split(',').map((section) => section.trim()).filter(Boolean))
-const selectedStudentIds = ref<string[]>(Array.from(new Set(props.department.studentIds || [])))
-const studentSearch = ref('')
-
-const filteredStudents = computed(() => props.students.filter((student) => {
-	const query = studentSearch.value.trim().toLowerCase()
-	return !query || [student.name, student.studentId, student.gradeLevel, student.section].some((value) => value.toLowerCase().includes(query))
-}))
+const gradeLevel = ref((props.department.gradeLevel || 'Grade 11').split(',')[0].trim() || 'Grade 11')
+const section = ref((props.department.section || 'N/A').split(',')[0].trim() || 'N/A')
 
 function confirmDelete() {
 	if (window.confirm(`Delete the ${props.department.name} department?`)) {
@@ -24,7 +16,7 @@ function confirmDelete() {
 }
 
 function saveChanges() {
-	if (name.value.trim() && gradeLevels.value.length && sections.value.length) emit('save', props.department.id, name.value.trim(), adviser.value, gradeLevels.value, sections.value, selectedStudentIds.value)
+	if (name.value.trim() && gradeLevel.value && section.value) emit('save', props.department.id, name.value.trim(), adviser.value, [gradeLevel.value], [section.value])
 }
 </script>
 <template>
@@ -35,17 +27,11 @@ function saveChanges() {
 				<label for="manage-department-name" class="block text-sm font-medium text-slate-700">Department name</label>
 				<input id="manage-department-name" v-model="name" required class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
 				<label for="manage-department-level" class="mt-4 block text-sm font-medium text-slate-700">Grade level</label>
-				<select id="manage-department-level" v-model="gradeLevels" multiple class="mt-1 h-24 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="level in levelOptions" :key="level" :value="level">{{ level }}</option></select>
-				<div v-if="gradeLevels.includes('Grade 11') || gradeLevels.includes('Grade 12')"><label for="manage-department-section" class="mt-4 block text-sm font-medium text-slate-700">Sections</label><select id="manage-department-section" v-model="sections" multiple class="mt-1 h-20 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option>STEM</option><option>GAS</option></select></div>
+				<select id="manage-department-level" v-model="gradeLevel" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="level in levelOptions" :key="level" :value="level">{{ level }}</option></select>
+				<div><label for="manage-department-section" class="mt-4 block text-sm font-medium text-slate-700">Section</label><select id="manage-department-section" v-model="section" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option>N/A</option><option>STEM</option><option>GAS</option></select></div>
 				<label for="manage-department-adviser" class="mt-4 block text-sm font-medium text-slate-700">Adviser</label>
 				<select id="manage-department-adviser" v-model="adviser" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"><option v-for="adviserOption in props.advisers" :key="adviserOption" :value="adviserOption">{{ adviserOption }}</option></select>
-				<div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3">
-					<div class="flex items-center justify-between gap-3"><div><h3 class="text-sm font-bold text-slate-800">Students in this department</h3><p class="text-xs text-slate-500">{{ selectedStudentIds.length }} selected</p></div><input v-model="studentSearch" placeholder="Search students" class="min-w-0 w-40 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs outline-none focus:border-purple-500" /></div>
-					<div class="mt-3 max-h-48 space-y-1 overflow-y-auto pr-1">
-						<label v-for="student in filteredStudents" :key="student.id" class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-white"><input v-model="selectedStudentIds" type="checkbox" :value="student.id" class="h-4 w-4 accent-purple-600" /><span class="min-w-0"><span class="block truncate text-sm font-medium text-slate-800">{{ student.name }}</span><span class="block text-xs text-slate-500">{{ student.studentId }} · {{ student.gradeLevel }} · {{ student.section }}</span></span></label>
-						<p v-if="filteredStudents.length === 0" class="py-4 text-center text-xs text-slate-500">No students found.</p>
-					</div>
-				</div>
+				<div class="mt-5 rounded-xl border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800">All students whose profile matches this department's grade level and section will automatically receive its class requirements.</div>
 				<p v-if="props.saveError" class="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">{{ props.saveError }}</p>
 			</div>
 			<div class="flex shrink-0 gap-3 border-t border-slate-200 bg-white px-6 py-4"><button class="flex-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600" @click="confirmDelete">Delete</button><button class="flex-1 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white" @click="saveChanges">Save</button></div>
