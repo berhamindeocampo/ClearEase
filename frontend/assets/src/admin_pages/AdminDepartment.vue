@@ -6,7 +6,7 @@ import AdminManagePopup from '../popups/AdminManagePopup.vue'
 import { supabase } from '../composables/auth'
 import { fetchRows } from '../lib/database'
 
-const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+const levelOptions = ['Grade 11', 'Grade 12']
 type StudentOption = { id: string; name: string; studentId: string; gradeLevel: string; section: string }
 const departments = ref<Array<{ id: string; name: string; adviser: string; gradeLevel: string; section: string; requirement: string; requirements: string[]; action: string; studentIds: string[] }>>([])
 const searchQuery = ref('')
@@ -19,7 +19,7 @@ const selectedDepartmentDetail = ref<(typeof departments.value)[number] | null>(
 const adviserOptions = ref(['N/A'])
 const studentOptions = ref<StudentOption[]>([])
 const adviserIds = ref(new Map<string, string>())
-const activeLevel = ref('Grade 7')
+const activeLevel = ref('Grade 11')
 const activeSection = ref<'STEM' | 'GAS'>('STEM')
 
 const filteredDepartments = computed(() => departments.value.filter((item) =>

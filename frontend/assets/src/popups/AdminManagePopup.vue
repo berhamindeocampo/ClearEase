@@ -3,11 +3,11 @@ import { computed, ref } from 'vue'
 
 type StudentOption = { id: string; name: string; studentId: string; gradeLevel: string; section: string }
 const props = defineProps<{ department: { id: string; name: string; adviser: string; gradeLevel?: string; section?: string; requirement?: string; studentIds?: string[] }; advisers: string[]; students: StudentOption[]; saveError?: string }>()
-const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+const levelOptions = ['Grade 11', 'Grade 12']
 const emit = defineEmits<{ (event: 'close'): void; (event: 'delete', id: string): void; (event: 'save', id: string, name: string, adviser: string, gradeLevels: string[], section: string, studentIds: string[]): void }>()
 const name = ref(props.department.name)
 const adviser = ref(props.department.adviser)
-const gradeLevels = ref((props.department.gradeLevel || 'Grade 7').split(',').map((level) => level.trim()).filter(Boolean))
+const gradeLevels = ref((props.department.gradeLevel || 'Grade 11').split(',').map((level) => level.trim()).filter((level) => level === 'Grade 11' || level === 'Grade 12'))
 const section = ref(props.department.section || 'N/A')
 const selectedStudentIds = ref<string[]>([...(props.department.studentIds || [])])
 const studentSearch = ref('')

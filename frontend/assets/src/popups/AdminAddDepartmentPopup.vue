@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { reactive } from 'vue'
 const props = defineProps<{ advisers: string[] }>()
-const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
-const form = reactive({ name: '', adviser: 'N/A', gradeLevels: ['Grade 7'], section: 'N/A' })
+const levelOptions = ['Grade 11', 'Grade 12']
+const form = reactive({ name: '', adviser: 'N/A', gradeLevels: ['Grade 11'], section: 'N/A' })
 const emit = defineEmits<{ (event: 'close'): void; (event: 'save', value: typeof form): void }>()
 function save() { if (form.name.trim()) emit('save', { ...form }) }
 </script>
