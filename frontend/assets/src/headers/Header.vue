@@ -18,8 +18,9 @@ const navItems: NavItem[] = [
   { id: 1, label: 'Dashboard', path: '/dashboard' },
   { id: 2, label: 'Clearance', path: '/clearance' },
   { id: 3, label: 'Requirements', path: '/requirements' },
-  { id: 4, label: 'Profile', path: '/profile' },
-  { id: 5, label: 'Settings', path: '/settings' }
+  { id: 4, label: 'Enrolled Classes', path: '/enrolled-classes' },
+  { id: 5, label: 'Profile', path: '/profile' },
+  { id: 6, label: 'Settings', path: '/settings' }
 ]
 
 const isActive = (path: string): boolean => {

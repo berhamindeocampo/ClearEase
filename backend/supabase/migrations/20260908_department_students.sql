@@ -49,4 +49,46 @@ create policy "department_students_admin_delete"
 on public.department_students for delete to authenticated
 using (public.is_admin_user());
 
+create or replace function public.get_my_enrolled_departments()
+returns table (
+  department_id uuid,
+  department_name text,
+  grade_level text,
+  section text,
+  adviser text
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select d.id, d.name, d.grade_level, d.section, coalesce(d.adviser, 'N/A')
+  from public.department_students ds
+  join public.departments d on d.id = ds.department_id
+  left join public.profiles student on student.id = ds.student_id
+  where ds.student_id = auth.uid()
+     or lower(student.email) = lower(coalesce(auth.email(), ''))
+  order by d.name;
+$$;
+
+revoke execute on function public.get_my_enrolled_departments() from public;
+grant execute on function public.get_my_enrolled_departments() to authenticated;
+
+create or replace function public.get_my_assigned_departments()
+returns table (department_id uuid, department_name text, grade_level text, section text, adviser text)
+language sql stable security definer set search_path = public
+as $$
+  select distinct d.id, d.name, d.grade_level, d.section, coalesce(d.adviser, 'N/A')
+  from public.departments d
+  left join public.department_personnel dp on dp.department_id = d.id
+  left join public.profiles personnel on personnel.id = dp.personnel_id
+  where dp.personnel_id = auth.uid()
+     or lower(personnel.email) = lower(coalesce(auth.email(), ''))
+     or lower(d.adviser) = lower(coalesce(personnel.full_name, auth.email(), ''))
+  order by d.name;
+$$;
+
+revoke execute on function public.get_my_assigned_departments() from public;
+grant execute on function public.get_my_assigned_departments() to authenticated;
+
 notify pgrst, 'reload schema';

@@ -4,6 +4,7 @@ import LandingPage from '../components/LandingPage.vue'
 import StudentDashboard from '../student_pages/StudentDashboard.vue'
 import StudentClearance from '../student_pages/StudentClearance.vue'
 import Requirements from '../student_pages/StudentRequirements.vue'
+import StudentClasses from '../student_pages/StudentClasses.vue'
 import Login from '../components/Login.vue'
 import SignIn from '../components/SignIn.vue'
 import Profiles from '../student_pages/StudentProfiles.vue'
@@ -97,6 +98,11 @@ const router = createRouter({
       path: '/requirements',
       name: 'requirements',
       component: Requirements,
+    },
+    {
+      path: '/enrolled-classes',
+      name: 'enrolled-classes',
+      component: StudentClasses,
     },
     {
       path: '/profile',

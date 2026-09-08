@@ -11,6 +11,7 @@ interface Student {
   studentId: string
   gradeLevel: string
   section: string
+  departmentIds: string[]
 }
 
 interface Requirement {
@@ -19,8 +20,16 @@ interface Requirement {
   department: string
 }
 
+interface Department {
+  id: string
+  name: string
+  gradeLevel: string
+  section: string
+}
+
 const students = ref<Student[]>([])
 const requirements = ref<Requirement[]>([])
+const departments = ref<Department[]>([])
 const searchQuery = ref('')
 const selectedClass = ref('all')
 const isLoading = ref(true)
@@ -35,15 +44,15 @@ const isSaving = ref(false)
 const successMessage = ref('')
 
 const classOptions = computed(() => {
-  const classes = new Set(students.value.map((student) => `${student.gradeLevel} | ${student.section}`).filter(Boolean))
-  return [...classes].sort((left, right) => left.localeCompare(right))
+  return departments.value
 })
+
+const selectedClassName = computed(() => departments.value.find((department) => department.id === selectedClass.value)?.name || 'the selected class')
 
 const filteredStudents = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()
   return students.value.filter((student) => {
-    const studentClass = `${student.gradeLevel} | ${student.section}`
-    const matchesClass = selectedClass.value === 'all' || studentClass === selectedClass.value
+    const matchesClass = selectedClass.value === 'all' || student.departmentIds.includes(selectedClass.value)
     const matchesSearch = !query || [student.fullName, student.email, student.studentId].some((value) => value.toLowerCase().includes(query))
     return matchesClass && matchesSearch
   })
@@ -51,15 +60,56 @@ const filteredStudents = computed(() => {
 
 const loadClassList = async () => {
   isLoading.value = true
-  const [profilesResult, requirementsResult, departmentsResult] = await Promise.all([
+  const [profilesResult, requirementsResult, departmentsResult, assignedDepartmentsResult, membershipsResult] = await Promise.all([
     fetchRows('profiles'),
     fetchRows('requirements'),
     fetchRows('departments'),
+    supabase!.rpc('get_my_assigned_departments'),
+    supabase!.from('department_students').select('department_id, student_id'),
   ])
 
-  loadError.value = profilesResult.error || requirementsResult.error || departmentsResult.error || ''
+  const departmentNames = new Map(departmentsResult.data.map((row) => [String(row.id), String(row.name || row.title || '—')]))
+  let assignedDepartmentRows = (assignedDepartmentsResult.data ?? []) as Record<string, any>[]
+  let assignmentError = assignedDepartmentsResult.error?.message || ''
+  if (assignedDepartmentsResult.error) {
+    const [legacyAssignmentsResult, currentProfileResult] = await Promise.all([
+      fetchRows('department_personnel'),
+      supabase!.rpc('get_my_profile'),
+    ])
+    const profileName = String(currentProfileResult.data?.full_name || currentProfileResult.data?.email || '').trim().toLowerCase()
+    const assignedIds = new Set(legacyAssignmentsResult.data.map((row) => String(row.department_id)))
+    assignedDepartmentRows = departmentsResult.data
+      .filter((department) => assignedIds.has(String(department.id)) || String(department.adviser || '').trim().toLowerCase() === profileName)
+      .map((department) => ({
+        department_id: department.id,
+        department_name: department.name || department.title,
+        grade_level: department.grade_level,
+        section: department.section,
+        adviser: department.adviser,
+      }))
+    assignmentError = legacyAssignmentsResult.error || currentProfileResult.error?.message || ''
+  }
+  loadError.value = profilesResult.error || requirementsResult.error || departmentsResult.error || assignmentError || membershipsResult.error?.message || ''
+  const assignedDepartmentIds = new Set(assignedDepartmentRows.map((row) => String(row.department_id)))
+  departments.value = assignedDepartmentRows
+    .map((row) => ({
+      id: String(row.department_id),
+      name: String(row.department_name || departmentNames.get(String(row.department_id)) || 'Subject'),
+      gradeLevel: String(row.grade_level || 'N/A'),
+      section: String(row.section || 'N/A'),
+    }))
+    .sort((left: Department, right: Department) => left.name.localeCompare(right.name))
+
+  const studentDepartmentIds = new Map<string, string[]>()
+  ;(membershipsResult.data ?? []).forEach((membership) => {
+    const departmentId = String(membership.department_id)
+    if (assignedDepartmentIds.has(departmentId)) {
+      const studentId = String(membership.student_id)
+      studentDepartmentIds.set(studentId, [...(studentDepartmentIds.get(studentId) || []), departmentId])
+    }
+  })
   students.value = profilesResult.data
-    .filter((row) => String(row.role || '').toLowerCase() === 'student')
+    .filter((row) => String(row.role || '').toLowerCase() === 'student' && studentDepartmentIds.has(String(row.id)))
     .map((row) => ({
       id: String(row.id),
       fullName: String(row.full_name || row.email || 'Student'),
@@ -67,10 +117,10 @@ const loadClassList = async () => {
       studentId: String(row.student_id || 'N/A'),
       gradeLevel: String(row.grade_level || 'N/A'),
       section: String(row.section || 'N/A'),
+      departmentIds: studentDepartmentIds.get(String(row.id)) || [],
     }))
     .sort((left, right) => left.fullName.localeCompare(right.fullName))
 
-  const departmentNames = new Map(departmentsResult.data.map((row) => [String(row.id), String(row.name || row.title || '—')]))
   requirements.value = requirementsResult.data.map((row) => ({
     id: String(row.id),
     title: String(row.title || row.name || 'Requirement'),
@@ -139,12 +189,13 @@ const addRequirement = async () => {
 
 const addClassRequirement = async () => {
   if (!supabase || selectedClass.value === 'all' || !selectedClassRequirementId.value) return
-  const [gradeLevel, section] = selectedClass.value.split(' | ')
+  const selectedDepartment = departments.value.find((department) => department.id === selectedClass.value)
+  if (!selectedDepartment) return
   isSaving.value = true
   loadError.value = ''
   const { error } = await supabase.from('class_requirements').upsert({
-    grade_level: gradeLevel,
-    section,
+    grade_level: selectedDepartment.gradeLevel,
+    section: selectedDepartment.section,
     requirement_id: selectedClassRequirementId.value,
   }, { onConflict: 'requirement_id,grade_level,section' })
 
@@ -152,7 +203,7 @@ const addClassRequirement = async () => {
     loadError.value = error.message
   } else {
     showClassRequirementEditor.value = false
-    successMessage.value = `Requirement added for ${selectedClass.value}.`
+    successMessage.value = `Requirement added for ${selectedDepartment.name}.`
   }
   isSaving.value = false
 }
@@ -182,7 +233,7 @@ onMounted(loadClassList)
         </div>
         <select v-model="selectedClass" class="rounded-lg border border-[#dfe3ea] bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-[#8d63e8]">
           <option value="all">Class: All</option>
-          <option v-for="className in classOptions" :key="className" :value="className">{{ className }}</option>
+          <option v-for="department in classOptions" :key="department.id" :value="department.id">{{ department.name }} · {{ department.gradeLevel }}</option>
         </select>
         <button class="rounded-lg bg-[#8d63e8] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#7f55dd] disabled:cursor-not-allowed disabled:opacity-50" :disabled="selectedClass === 'all'" @click="openClassRequirementEditor">+ Add to Class</button>
       </div>
@@ -238,7 +289,7 @@ onMounted(loadClassList)
     <div v-if="showClassRequirementEditor" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="showClassRequirementEditor = false">
       <form class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" @submit.prevent="addClassRequirement">
         <div class="flex items-center justify-between"><h2 class="text-xl font-bold">Add Requirement to Class</h2><button type="button" aria-label="Close" @click="showClassRequirementEditor = false"><X class="h-5 w-5 text-slate-400" /></button></div>
-        <p class="mt-1 text-sm text-slate-500">This will be visible to every student in {{ selectedClass }}.</p>
+        <p class="mt-1 text-sm text-slate-500">This will be visible to every student in {{ selectedClassName }}.</p>
         <select v-model="selectedClassRequirementId" required class="mt-5 w-full rounded-lg border px-3 py-2 text-sm"><option value="" disabled>Select a requirement</option><option v-for="requirement in requirements" :key="requirement.id" :value="requirement.id">{{ requirement.title }} · {{ requirement.department }}</option></select>
         <div class="mt-6 flex justify-end gap-3"><button type="button" class="rounded-lg border px-4 py-2 text-sm" @click="showClassRequirementEditor = false">Cancel</button><button class="rounded-lg bg-[#8d63e8] px-4 py-2 text-sm font-semibold text-white" :disabled="isSaving">{{ isSaving ? 'Adding...' : 'Add to Class' }}</button></div>
       </form>
