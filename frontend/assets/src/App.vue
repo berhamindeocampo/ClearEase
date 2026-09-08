@@ -18,6 +18,7 @@ import Footer from './components/Footer.vue'
 
 const route = useRoute()
 const THEME_MODE_KEY = 'clearease-theme-mode'
+const AUTO_MATCH_KEY = 'clearease-auto-match-system'
 
 function applyRouteTheme() {
   const isPublicRoute = ['landing', 'login', 'signin'].includes(String(route.name))
@@ -26,7 +27,13 @@ function applyRouteTheme() {
     return
   }
 
-  document.documentElement.dataset.theme = localStorage.getItem(THEME_MODE_KEY) === 'dark' ? 'dark' : 'light'
+  const autoMatchSystem = localStorage.getItem(AUTO_MATCH_KEY) === 'true'
+  const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  document.documentElement.dataset.theme = autoMatchSystem
+    ? systemTheme
+    : localStorage.getItem(THEME_MODE_KEY) === 'dark'
+      ? 'dark'
+      : 'light'
 }
 
 watch(() => route.name, applyRouteTheme, { immediate: true })
