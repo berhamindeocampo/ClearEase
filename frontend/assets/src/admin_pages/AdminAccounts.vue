@@ -89,7 +89,7 @@ onMounted(fetchAccounts)
         <div class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] gap-3 border-b border-[#e5e7eb] bg-[#f3f4f6] px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
           <div>ID</div>
           <div>Name</div>
-          <div>{{ activeType === 'students' ? 'Year Level' : 'Role' }}</div>
+          <div>Role</div>
           <div>Account Status</div>
           <div class="text-right pr-2">Action</div>
         </div>
@@ -100,7 +100,7 @@ onMounted(fetchAccounts)
         <div v-for="account in accounts" v-else :key="account.id" class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] items-center gap-3 border-b border-[#edf0f4] px-4 py-3 last:border-b-0 text-sm">
           <div class="font-medium text-slate-700">{{ account.id }}</div>
           <div class="font-medium text-slate-700">{{ account.name }}</div>
-          <div>{{ activeType === 'students' ? account.yearLevel : account.role }}</div>
+          <div class="capitalize">{{ account.role.toLowerCase() }}</div>
           <div>
             <span
               :class="[

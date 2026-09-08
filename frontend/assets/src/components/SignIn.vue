@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import cleareaseLogo from '../assets/clearease.png';
 import universityLogo from '../assets/stpaul.png';
 import { useAuth } from '../composables/auth';
+import { ArrowLeft } from 'lucide-vue-next';
 
 // Define the shape of our form data
 interface SignUpForm {
@@ -55,7 +56,10 @@ const handleSubmit = async () => {
 
     router.push('/login');
   } catch (error: any) {
-    errorMessage.value = error?.message || 'An error occurred during sign up. Please try again.';
+    const message = String(error?.message || '')
+    errorMessage.value = message.toLowerCase().includes('confirmation email')
+      ? 'Account creation is blocked because Supabase could not send the confirmation email. Disable email confirmations in Supabase Authentication settings, or configure a working SMTP provider.'
+      : message || 'An error occurred during sign up. Please try again.';
   } finally {
     isSubmitting.value = false;
   }
@@ -66,6 +70,10 @@ const handleSubmit = async () => {
   <div class="bg-[#e9e0ef] min-h-screen flex items-center justify-center p-3 antialiased text-slate-900 font-sans">
     <main class="w-full max-w-[460px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] overflow-hidden border border-gray-100">
       <div class="p-5 sm:p-6">
+        <router-link to="/" class="group mb-4 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-purple-50/70 px-3.5 py-2 text-sm font-semibold text-purple-700 shadow-sm transition hover:border-purple-300 hover:bg-purple-100 hover:text-purple-900 hover:shadow-md">
+          <ArrowLeft class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+          Back to landing page
+        </router-link>
         
         <div class="flex flex-col items-center justify-center mb-5 space-y-2">
           <img

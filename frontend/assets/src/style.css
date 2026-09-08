@@ -117,3 +117,17 @@
 	color: #f9fafb;
 	border-color: #475569;
 }
+
+:root[data-theme='dark'] input::placeholder,
+:root[data-theme='dark'] textarea::placeholder {
+	color: #94a3b8;
+	opacity: 1;
+}
+
+:root[data-theme='dark'] input:focus,
+:root[data-theme='dark'] textarea:focus,
+:root[data-theme='dark'] select:focus {
+	border-color: #8b5cf6;
+	outline: 2px solid rgb(139 92 246 / 0.25);
+	outline-offset: 0;
+}

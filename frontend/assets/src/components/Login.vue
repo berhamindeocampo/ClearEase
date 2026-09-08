@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/auth'
 import cleareaseLogo from '../assets/clearease.png'
 import universityLogo from '../assets/stpaul.png'
+import { ArrowLeft } from 'lucide-vue-next'
 
 const router = useRouter()
 const { logIn } = useAuth()
@@ -82,6 +83,11 @@ const handleLogIn = async (): Promise<void> => {
 <template>
   <div class="min-h-screen bg-[#e9e0ef] flex items-center justify-center px-4 py-5">
     <div class="w-full max-w-[440px]">
+      <router-link to="/" class="group mb-3 inline-flex items-center gap-2 rounded-full border border-purple-200 bg-white/70 px-3.5 py-2 text-sm font-semibold text-purple-700 shadow-sm backdrop-blur transition hover:border-purple-300 hover:bg-white hover:text-purple-900 hover:shadow-md">
+        <ArrowLeft class="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        Back to landing page
+      </router-link>
+
       <div class="mb-3 flex justify-center">
           <img
             :src="universityLogo"
