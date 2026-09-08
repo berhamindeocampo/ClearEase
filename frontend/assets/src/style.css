@@ -84,9 +84,18 @@
 
 :root[data-theme='dark'] .text-slate-900,
 :root[data-theme='dark'] .text-slate-800,
+:root[data-theme='dark'] .text-slate-950,
 :root[data-theme='dark'] .text-gray-900,
 :root[data-theme='dark'] .text-gray-800 {
     color: #f9fafb !important;
+}
+
+:root[data-theme='dark'] .hover\:bg-\[\#f7f3ff\]:hover {
+    background-color: #2d2550 !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#f6f3ff\] {
+    background-color: #273449 !important;
 }
 
 :root[data-theme='dark'] .text-slate-700,
