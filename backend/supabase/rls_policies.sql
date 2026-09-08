@@ -166,6 +166,70 @@ alter table public.clearance_submissions enable row level security;
 alter table public.department_personnel enable row level security;
 alter table public.activity_logs enable row level security;
 
+-- Class-level and individual requirement assignments used by school personnel.
+create table if not exists public.class_requirements (
+  id uuid primary key default gen_random_uuid(),
+  requirement_id uuid not null references public.requirements(id) on delete cascade,
+  grade_level text not null,
+  section text not null,
+  assigned_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  unique (requirement_id, grade_level, section)
+);
+
+create table if not exists public.student_requirements (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references public.profiles(id) on delete cascade,
+  requirement_id uuid not null references public.requirements(id) on delete cascade,
+  assigned_by uuid references public.profiles(id),
+  created_at timestamptz not null default now(),
+  unique (student_id, requirement_id)
+);
+
+create table if not exists public.department_students (
+  id uuid primary key default gen_random_uuid(),
+  department_id uuid not null references public.departments(id) on delete cascade,
+  student_id uuid not null references public.profiles(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  unique (department_id, student_id)
+);
+
+alter table public.class_requirements enable row level security;
+alter table public.student_requirements enable row level security;
+alter table public.department_students enable row level security;
+
+drop policy if exists "class_requirements_read_authenticated" on public.class_requirements;
+create policy "class_requirements_read_authenticated"
+on public.class_requirements for select to authenticated using (true);
+
+drop policy if exists "class_requirements_staff_manage" on public.class_requirements;
+create policy "class_requirements_staff_manage"
+on public.class_requirements for all to authenticated
+using (public.current_role() in ('admin', 'school_personnel'))
+with check (public.current_role() in ('admin', 'school_personnel'));
+
+drop policy if exists "student_requirements_read_own_or_staff" on public.student_requirements;
+create policy "student_requirements_read_own_or_staff"
+on public.student_requirements for select to authenticated
+using (student_id = auth.uid() or public.current_role() in ('admin', 'school_personnel'));
+
+drop policy if exists "student_requirements_staff_manage" on public.student_requirements;
+create policy "student_requirements_staff_manage"
+on public.student_requirements for all to authenticated
+using (public.current_role() in ('admin', 'school_personnel'))
+with check (public.current_role() in ('admin', 'school_personnel'));
+
+drop policy if exists "department_students_read_authenticated" on public.department_students;
+create policy "department_students_read_authenticated"
+on public.department_students for select to authenticated
+using (student_id = auth.uid() or public.current_role() in ('admin', 'school_personnel'));
+
+drop policy if exists "department_students_admin_manage" on public.department_students;
+create policy "department_students_admin_manage"
+on public.department_students for all to authenticated
+using (public.current_role() = 'admin')
+with check (public.current_role() = 'admin');
+
 alter table if exists public.clearance_submissions
   add column if not exists file_name text,
   add column if not exists file_path text,

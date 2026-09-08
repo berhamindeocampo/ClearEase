@@ -15,9 +15,10 @@ const route = useRoute()
 const isMobileMenuOpen = ref(false)
 
 const navItems: NavItem[] = [
-  { id: 1, label: 'Requirements', path: '/sp/requirements' },
-  { id: 2, label: 'Clearances', path: '/sp/clearances' },
-  { id: 3, label: 'Settings', path: '/sp/settings' }
+  { id: 1, label: 'Class List', path: '/sp/class-list' },
+  { id: 2, label: 'Requirements', path: '/sp/requirements' },
+  { id: 3, label: 'Clearances', path: '/sp/clearances' },
+  { id: 4, label: 'Settings', path: '/sp/settings' }
 ]
 
 const isActive = (path: string): boolean => {
@@ -40,7 +41,7 @@ a {
     <div class="max-w-[1500px] mx-auto px-4 md:px-6 py-3">
       <div class="flex items-center justify-between gap-4">
         <div class="flex items-center gap-3 md:gap-5 min-w-0 flex-1">
-          <router-link to="/sp/requirements" class="flex items-center shrink-0 group">
+          <router-link to="/sp/class-list" class="flex items-center shrink-0 group">
             <img
               :src="cleareaseLogo"
               alt="ClearEase Logo"
