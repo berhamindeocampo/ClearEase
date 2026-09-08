@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { fetchRows, relativeDate } from '../lib/database'
+import { displayDate, fetchRows } from '../lib/database'
 import { supabase, useAuth } from '../composables/auth'
 
 interface ClearanceActivity {
@@ -26,6 +26,7 @@ const completedCount = computed(() => clearedRequirements.value)
 const totalCount = computed(() => requirementsTotal.value)
 const progress = computed(() => totalCount.value ? Math.round((completedCount.value / totalCount.value) * 100) : 0)
 const initials = computed(() => studentName.value.split(' ').filter(Boolean).map((part) => part[0]).join('').slice(0, 2).toUpperCase() || 'ST')
+const getActivityDate = (item: Record<string, any>) => item.updated_at || item.reviewed_at || item.submitted_at || item.created_at
 
 async function loadClearance() {
 	const user = await getCurrentUser()
@@ -64,7 +65,7 @@ async function loadClearance() {
 				status: rawStatus === 'approved' || rawStatus === 'cleared' ? 'Cleared' : rawStatus === 'rejected' || rawStatus === 'for action' ? 'For Action' : 'Pending',
 				remarks: String(item.remarks || item.remark || 'No remarks yet.'),
 				personnel: String(item.personnel_name || item.reviewed_by_name || 'School Personnel'),
-				date: relativeDate(item.updated_at || item.created_at),
+				date: displayDate(getActivityDate(item)),
 			}
 		})
 		.sort((left, right) => right.date.localeCompare(left.date))
