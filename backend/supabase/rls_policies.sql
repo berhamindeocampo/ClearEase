@@ -56,6 +56,42 @@ $$;
 
 grant execute on function public.get_admin_profiles() to authenticated;
 
+create or replace function public.admin_update_profile_role(
+  p_profile_id uuid,
+  p_role text
+)
+returns public.profiles
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  updated_profile public.profiles;
+begin
+  if public.current_role() <> 'admin' then
+    raise exception 'Only administrators can change account roles';
+  end if;
+
+  if p_role not in ('student', 'school_personnel', 'admin', 'unlisted') then
+    raise exception 'Invalid account role';
+  end if;
+
+  update public.profiles
+  set role = p_role
+  where id = p_profile_id
+  returning * into updated_profile;
+
+  if updated_profile.id is null then
+    raise exception 'Account profile was not found';
+  end if;
+
+  return updated_profile;
+end;
+$$;
+
+revoke execute on function public.admin_update_profile_role(uuid, text) from public;
+grant execute on function public.admin_update_profile_role(uuid, text) to authenticated;
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql

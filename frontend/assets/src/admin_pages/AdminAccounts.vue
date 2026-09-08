@@ -72,9 +72,9 @@ function selectAccountType(type: AccountType) {
   fetchAccounts()
 }
 
-async function handleAssigned(role: 'student' | 'school_personnel') {
+async function handleAssigned(role: 'student' | 'school_personnel' | 'unlisted') {
   selectedAccount.value = null
-  activeType.value = role === 'student' ? 'students' : 'school_personnel'
+  activeType.value = role === 'student' ? 'students' : role === 'school_personnel' ? 'school_personnel' : 'unlisted'
   await fetchAccounts()
 }
 
@@ -98,7 +98,7 @@ onMounted(fetchAccounts)
         <div class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] gap-3 border-b border-[#e5e7eb] bg-[#f3f4f6] px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
           <div>ID</div>
           <div>Name</div>
-          <div>{{ activeType === 'students' ? 'Year Level' : activeType === 'unlisted' ? 'Position' : 'Role' }}</div>
+          <div>{{ activeType === 'students' ? 'Year Level' : 'Position' }}</div>
           <div>Account Status</div>
           <div class="text-right pr-2">Action</div>
         </div>
@@ -122,12 +122,12 @@ onMounted(fetchAccounts)
           </div>
           <div class="text-right">
             <button class="rounded-lg bg-[#8d63e8] px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#7f55dd]" @click="selectedAccount = account">
-              {{ activeType === 'unlisted' ? 'Manage Account' : 'View Account Details' }} <span class="ml-1">→</span>
+              Manage Account <span class="ml-1">→</span>
             </button>
           </div>
         </div>
       </div>
     </main>
-    <AdminAccountPopup v-if="selectedAccount" :account="selectedAccount" :can-assign="activeType === 'unlisted'" @close="selectedAccount = null" @assigned="handleAssigned" />
+    <AdminAccountPopup v-if="selectedAccount" :account="selectedAccount" :can-assign="true" @close="selectedAccount = null" @assigned="handleAssigned" />
   </div>
 </template>
