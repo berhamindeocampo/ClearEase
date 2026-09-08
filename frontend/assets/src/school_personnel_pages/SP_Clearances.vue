@@ -162,7 +162,7 @@ const statusClasses: Record<string, string> = {
           <h2 class="text-lg sm:text-xl font-black text-slate-900">Clearances Table</h2>
         </div>
 
-        <div class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
+        <div class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#aeb6c4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <div>Students</div>
           <div>Requirements</div>
           <div>Department</div>
@@ -174,8 +174,8 @@ const statusClasses: Record<string, string> = {
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading clearances...</div>
         <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
         <div v-else-if="filteredClearances.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No clearance submissions found.</div>
-        <div v-for="item in filteredClearances" v-else :key="item.id" class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
-          <div>{{ item.student }}</div>
+        <div v-for="item in filteredClearances" v-else :key="item.id" class="grid grid-cols-[1.5fr_1.4fr_1.2fr_1fr_1fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#b8c0cc] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+          <div class="flex min-w-0 items-center gap-2 font-medium"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ item.student }}</span></div>
           <div>{{ item.requirement }}</div>
           <div>{{ item.department }}</div>
           <div>{{ item.submitted }}</div>

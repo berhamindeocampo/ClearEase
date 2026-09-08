@@ -253,11 +253,11 @@ onMounted(loadClassList)
         </section>
 
         <section v-if="selectedClass !== 'all' && subjectGroups[0]" class="overflow-hidden rounded-2xl border border-[#dfe3ea] bg-white shadow-md">
-          <div class="flex flex-col gap-3 border-b border-[#edf0f4] bg-[#f7f7fb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="flex flex-col gap-3 border-b border-[#aeb6c4] bg-[#f7f7fb] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div><h2 class="font-bold text-slate-900">{{ subjectGroups[0].name }} Students</h2><p class="text-xs text-slate-500">{{ subjectGroups[0].gradeLevel }} · {{ subjectGroups[0].section }}</p></div>
             <button class="rounded-lg bg-[#8d63e8] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#7f55dd]" @click="openClassRequirementEditor">+ Add to Subject</button>
           </div>
-          <div class="border-b border-[#edf0f4] p-4">
+          <div class="border-b border-[#b8c0cc] p-4">
             <div class="relative max-w-md">
               <Search class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
               <input v-model="searchQuery" placeholder="Search students..." class="w-full rounded-lg border border-[#dfe3ea] bg-slate-50 py-2.5 pl-10 pr-3 text-sm outline-none transition focus:border-[#8d63e8]" />
@@ -265,10 +265,10 @@ onMounted(loadClassList)
           </div>
           <div class="overflow-x-auto">
             <div class="min-w-[860px]">
-              <div class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr] gap-3 border-b border-[#edf0f4] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600"><div>Student</div><div>School ID</div><div>Class</div><div>Status</div></div>
+              <div class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr] gap-3 border-b border-[#aeb6c4] px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-600"><div>Student</div><div>School ID</div><div>Class</div><div>Status</div></div>
               <div v-if="subjectGroups[0].students.length === 0" class="px-5 py-8 text-center text-sm text-slate-500">No students match your search in this subject.</div>
-              <div v-for="student in subjectGroups[0].students" v-else :key="student.id" class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr] items-center gap-3 border-b border-[#edf0f4] px-5 py-4 text-sm last:border-b-0">
-                <div class="flex items-center gap-3"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-[#eee7ff] font-bold text-[#7c4fe0]">{{ student.fullName.split(' ').map((part) => part[0]).slice(0, 2).join('') }}</div><div><p class="font-semibold text-slate-900">{{ student.fullName }}</p><p class="text-xs text-slate-500">{{ student.email }}</p></div></div>
+              <div v-for="student in subjectGroups[0].students" v-else :key="student.id" class="grid grid-cols-[1.5fr_1.3fr_1.3fr_1.1fr] items-center gap-3 border-b border-[#b8c0cc] px-5 py-4 text-sm last:border-b-0">
+                <div class="flex min-w-0 items-center gap-3"><div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eee7ff] font-bold text-[#7c4fe0]">{{ student.fullName.split(' ').map((part) => part[0]).slice(0, 2).join('') }}</div><div class="min-w-0"><p class="flex items-center gap-2 font-semibold text-slate-900"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ student.fullName }}</span></p><p class="text-xs text-slate-500">{{ student.email }}</p></div></div>
                 <div class="text-slate-600">{{ student.studentId }}</div><div><p class="font-medium">{{ student.gradeLevel }}</p><p class="text-xs text-slate-500">{{ student.section }}</p></div><div><span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Active</span></div>
               </div>
             </div>
