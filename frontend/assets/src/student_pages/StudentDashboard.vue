@@ -9,7 +9,9 @@ import { displayDate, fetchRows } from '../lib/database'
 interface Activity {
   id: string | number
   title: string
+  requirement: string
   department: string
+  personnel: string
   remarks: string
   status: 'Approved' | 'Pending' | 'Rejected'
   type: 'approved' | 'pending' | 'rejected'
@@ -84,11 +86,14 @@ async function loadActivities() {
   const submissionRows = (submissionsResult.data ?? []) as Record<string, any>[]
   const submissions = submissionRows.filter((row: Record<string, unknown>) => !currentUser || String(row.student_id) === String(currentUser.id))
   const departmentNames = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.name || department.title || 'Subject')]))
+  const departmentPersonnel = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.adviser || 'School Personnel')]))
   const subjectNames = new Map(requirementsResult.data.map((requirement) => [
     String(requirement.id),
     departmentNames.get(String(requirement.department_id)) || String(requirement.department_name || requirement.department || 'Subject'),
   ]))
   const subjectFor = (row: Record<string, any>) => subjectNames.get(String(row.requirement_id)) || String(row.department_name || row.department || row.title || row.requirement_name || 'Subject')
+  const requirementFor = (row: Record<string, any>) => String(row.requirement_name || row.requirement || row.title || 'Requirement')
+  const personnelFor = (row: Record<string, any>) => departmentPersonnel.get(String(requirementsResult.data.find((requirement) => String(requirement.id) === String(row.requirement_id))?.department_id)) || String(row.personnel_name || row.school_personnel || 'School Personnel')
   const sortedSubmissions = [...submissions].sort((left, right) => {
     const leftTime = new Date(String(left.updated_at || left.created_at || 0)).getTime()
     const rightTime = new Date(String(right.updated_at || right.created_at || 0)).getTime()
@@ -119,7 +124,9 @@ async function loadActivities() {
       return {
         id: row.id || index,
         title: subjectFor(row),
+        requirement: requirementFor(row),
         department: String(row.department_name || row.department || '—'),
+        personnel: personnelFor(row),
         remarks: String(row.remarks || 'No remarks provided.'),
         status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
         type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
@@ -141,7 +148,9 @@ async function loadActivities() {
     return {
       id: row.id || index,
       title: subjectFor(row),
+      requirement: requirementFor(row),
       department: String(row.department_name || row.department || '—'),
+      personnel: personnelFor(row),
       remarks: String(row.remarks || row.description || 'No remarks provided.'),
       status: status === 'Rejected' ? 'Rejected' : status === 'Approved' ? 'Approved' : 'Pending',
       type: status.toLowerCase() === 'rejected' ? 'rejected' : status.toLowerCase() === 'approved' ? 'approved' : 'pending',
@@ -168,6 +177,11 @@ const viewAllActivity = () => {
 
 const viewActivityDetails = (activity: Activity) => {
   selectedActivity.value = activity
+}
+
+const viewActivityById = (id: string | number) => {
+  const activity = recentActivities.value.find((item) => String(item.id) === String(id))
+  if (activity) viewActivityDetails(activity)
 }
 
 const getActivityIconClasses = (type: string): string => {
@@ -282,7 +296,7 @@ button {
       </div>
     </div>
 
-    <StudentViewAllPopup v-if="activePopup === 'activity'" :activities="recentActivities" @close="activePopup = null" />
+    <StudentViewAllPopup v-if="activePopup === 'activity'" :activities="recentActivities" @close="activePopup = null" @select="viewActivityById" />
 
     <div v-if="selectedActivity" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4" @click.self="selectedActivity = null">
       <section class="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl" role="dialog" aria-modal="true" aria-label="Activity details">
