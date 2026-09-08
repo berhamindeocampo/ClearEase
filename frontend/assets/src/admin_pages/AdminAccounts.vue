@@ -72,6 +72,12 @@ function selectAccountType(type: AccountType) {
   fetchAccounts()
 }
 
+async function handleAssigned(role: 'student' | 'school_personnel') {
+  selectedAccount.value = null
+  activeType.value = role === 'student' ? 'students' : 'school_personnel'
+  await fetchAccounts()
+}
+
 onMounted(fetchAccounts)
 </script>
 
@@ -122,6 +128,6 @@ onMounted(fetchAccounts)
         </div>
       </div>
     </main>
-    <AdminAccountPopup v-if="selectedAccount" :account="selectedAccount" :can-assign="activeType === 'unlisted'" @close="selectedAccount = null" @assigned="fetchAccounts" />
+    <AdminAccountPopup v-if="selectedAccount" :account="selectedAccount" :can-assign="activeType === 'unlisted'" @close="selectedAccount = null" @assigned="handleAssigned" />
   </div>
 </template>

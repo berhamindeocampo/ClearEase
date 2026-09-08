@@ -115,6 +115,15 @@ where lower(profiles.email) = lower(users.email)
   and profiles.id <> users.id;
 
 alter table public.profiles enable row level security;
+alter table if exists public.profiles
+  add column if not exists grade_level text,
+  add column if not exists section text,
+  add column if not exists contact_number text;
+alter table if exists public.departments
+  add column if not exists grade_level text default 'Others';
+update public.departments
+set grade_level = 'Others'
+where grade_level is null or trim(grade_level) = '';
 alter table public.departments enable row level security;
 alter table public.requirements enable row level security;
 alter table public.clearance_submissions enable row level security;
@@ -269,6 +278,12 @@ create policy "profiles_admin_manage"
 on public.profiles for all to authenticated
 using (public.current_role() = 'admin')
 with check (public.current_role() = 'admin');
+
+drop policy if exists "profiles_update_self" on public.profiles;
+create policy "profiles_update_self"
+on public.profiles for update to authenticated
+using (id = auth.uid())
+with check (id = auth.uid());
 
 -- Departments and requirements are readable by signed-in users.
 drop policy if exists "departments_read_authenticated" on public.departments;

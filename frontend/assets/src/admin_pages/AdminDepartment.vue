@@ -1,26 +1,32 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import AdminHeader from '../headers/AdminHeader.vue'
 import AdminAddDepartmentPopup from '../popups/AdminAddDepartmentPopup.vue'
 import AdminManagePopup from '../popups/AdminManagePopup.vue'
 import { supabase } from '../composables/auth'
 import { fetchRows } from '../lib/database'
 
-const departments = ref<Array<{ id: string; name: string; adviser: string; requirement: string; action: string }>>([])
+const levelOptions = ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12', 'Others']
+const departments = ref<Array<{ id: string; name: string; adviser: string; gradeLevel: string; requirement: string; action: string }>>([])
 const searchQuery = ref('')
 const isLoading = ref(true)
 const loadError = ref('')
 const activePopup = ref<'add' | 'manage' | null>(null)
 const selectedDepartment = ref<(typeof departments.value)[number] | null>(null)
 const adviserOptions = ref(['N/A'])
+const activeLevel = ref('Grade 7')
 
-async function addDepartment(form: { name: string; adviser: string }) {
+const filteredDepartments = computed(() => departments.value.filter((item) =>
+  item.gradeLevel === activeLevel.value && item.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+))
+
+async function addDepartment(form: { name: string; adviser: string; gradeLevel: string }) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
   }
 
-  const { error } = await supabase.from('departments').insert({ name: form.name.trim(), adviser: form.adviser.trim() })
+  const { error } = await supabase.from('departments').insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevel })
   if (error) {
     loadError.value = error.message
     return
@@ -47,13 +53,13 @@ async function deleteDepartment(departmentId: string) {
   await loadDepartments()
 }
 
-async function updateDepartment(departmentId: string, name: string, adviser: string) {
+async function updateDepartment(departmentId: string, name: string, adviser: string, gradeLevel: string) {
   if (!supabase) {
     loadError.value = 'Supabase is not configured.'
     return
   }
 
-  const { error } = await supabase.from('departments').update({ name, adviser }).eq('id', departmentId)
+  const { error } = await supabase.from('departments').update({ name, adviser, grade_level: gradeLevel }).eq('id', departmentId)
   if (error) {
     loadError.value = error.message
     return
@@ -82,6 +88,7 @@ async function loadDepartments() {
       id: String(id),
       name: String(department.name || department.title || id),
       adviser: String(department.adviser || '').trim() || 'N/A',
+      gradeLevel: String(department.grade_level || 'Others'),
       requirement: String(requirementResult.data.find((item) => item.department_id === id)?.title || '—'),
       action: 'Manage',
     }
@@ -112,6 +119,12 @@ onMounted(loadDepartments)
           <h2 class="text-lg sm:text-xl font-black text-slate-900">Departments</h2>
         </div>
 
+        <div class="flex gap-2 overflow-x-auto border-b border-[#edf0f4] px-4 sm:px-5 py-3">
+          <button v-for="level in levelOptions" :key="level" class="whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-semibold" :class="activeLevel === level ? 'border-[#8d63e8] bg-[#8d63e8] text-white' : 'border-[#d5d7df] bg-white text-slate-600'" @click="activeLevel = level">
+            {{ level }}
+          </button>
+        </div>
+
         <div class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <div>Department</div>
           <div>Adviser</div>
@@ -120,8 +133,8 @@ onMounted(loadDepartments)
 
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading departments...</div>
         <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
-        <div v-else-if="departments.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No departments found.</div>
-        <div v-for="dept in departments.filter((item) => item.name.toLowerCase().includes(searchQuery.toLowerCase()))" v-else :key="dept.name" class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+        <div v-else-if="filteredDepartments.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No departments found for {{ activeLevel }}.</div>
+        <div v-for="dept in filteredDepartments" v-else :key="dept.id" class="grid grid-cols-[1.1fr_1.2fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
           <div>{{ dept.name }}</div>
           <div>{{ dept.adviser }}</div>
           <div class="text-right">

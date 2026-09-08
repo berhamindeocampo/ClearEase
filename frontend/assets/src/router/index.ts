@@ -30,7 +30,7 @@ const getSupabaseUserRole = async (userId: string, email?: string): Promise<User
     .rpc('get_my_profile')
 
   const rpcRole = String(rpcProfile?.role || '').trim().toLowerCase()
-  if (rpcRole === 'admin' || rpcRole === 'school_personnel' || rpcRole === 'student') {
+  if (rpcRole === 'admin' || rpcRole === 'school_personnel' || rpcRole === 'student' || rpcRole === 'unlisted') {
     return rpcRole
   }
 
@@ -181,7 +181,7 @@ router.beforeEach(async (to, _from, next) => {
       return
     }
 
-    if (isSettingsRoute && to.name === 'settings' && localSession.role !== 'student') {
+    if (isSettingsRoute && to.name === 'settings' && localSession.role !== 'student' && localSession.role !== 'unlisted') {
       next(localSession.role === 'admin' ? '/admin/settings' : '/sp/settings')
       return
     }
@@ -228,7 +228,7 @@ router.beforeEach(async (to, _from, next) => {
         return
       }
 
-      if (isSettingsRoute && to.name === 'settings' && fallbackRole !== 'student') {
+      if (isSettingsRoute && to.name === 'settings' && fallbackRole !== 'student' && fallbackRole !== 'unlisted') {
         next(fallbackRole === 'admin' ? '/admin/settings' : '/sp/settings')
         return
       }

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { useAuth } from '../composables/auth'
+import { supabase, useAuth } from '../composables/auth'
 
 const router = useRouter()
 const { logOut } = useAuth()
+const isEditingProfile = ref(false)
+const isSavingProfile = ref(false)
 
 const getSessionUser = () => {
   if (typeof window === 'undefined') return null
@@ -46,6 +48,19 @@ interface PasswordFormState {
 // --- Reactive State ---
 const showPasswordForm = ref<boolean>(false);
 const errorMessage = ref<string>('');
+const profileMessage = ref<string>('')
+const gradeLevelOptions = ['N/A', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']
+const sectionOptions = computed(() => {
+  if (['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10'].includes(student.value.gradeLevel)) {
+    return ['N/A', 'Section A', 'Section B', 'Section C']
+  }
+
+  if (['Grade 11', 'Grade 12'].includes(student.value.gradeLevel)) {
+    return ['N/A', 'STEM', 'GAS']
+  }
+
+  return ['N/A']
+})
 
 const student = ref<StudentProfile>({
   fullName: 'Student',
@@ -69,16 +84,98 @@ const syncStudentFromSession = () => {
     fullName: sessionUser.fullName || 'Student',
     initials: getInitials(sessionUser.fullName || 'Student'),
     studentId: sessionUser.studentId || 'N/A',
-    gradeLevel: 'Grade 12 - GAS',
-    section: 'GAS-B',
+    gradeLevel: sessionUser.gradeLevel || 'N/A',
+    section: sessionUser.section || 'N/A',
     email: sessionUser.email || '',
-    contactNumber: '+63 917 123 4567',
+    contactNumber: sessionUser.contactNumber || 'N/A',
     password: ''
   }
 }
 
+const loadProfile = async () => {
+  if (!supabase) return
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', user.id).maybeSingle()
+  if (error || !data) return
+
+  student.value.fullName = String(data.full_name || student.value.fullName)
+  student.value.studentId = String(data.student_id || student.value.studentId)
+  student.value.gradeLevel = String(data.grade_level || 'N/A')
+  student.value.section = String(data.section || 'N/A')
+  student.value.contactNumber = String(data.contact_number || 'N/A')
+  student.value.email = String(data.email || user.email || student.value.email)
+  student.value.initials = getInitials(student.value.fullName)
+}
+
+const toggleProfileEdit = () => {
+  profileMessage.value = ''
+  isEditingProfile.value = !isEditingProfile.value
+}
+
+const handleGradeLevelChange = () => {
+  if (!sectionOptions.value.includes(student.value.section)) {
+    student.value.section = 'N/A'
+  }
+}
+
+const saveProfile = async () => {
+  if (!supabase) {
+    profileMessage.value = 'Supabase is not configured.'
+    return
+  }
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    profileMessage.value = 'Your session has expired. Please log in again.'
+    return
+  }
+
+  const fullName = student.value.fullName.trim()
+  const schoolId = student.value.studentId.trim()
+  const gradeLevel = student.value.gradeLevel.trim()
+  const section = student.value.section.trim()
+  const contactNumber = student.value.contactNumber.trim()
+  if (!fullName || !schoolId || !gradeLevel || !section || !contactNumber) {
+    profileMessage.value = 'All profile fields are required.'
+    return
+  }
+
+  isSavingProfile.value = true
+  profileMessage.value = ''
+  const { error } = await supabase
+    .from('profiles')
+    .update({ full_name: fullName, student_id: schoolId, grade_level: gradeLevel, section, contact_number: contactNumber })
+    .eq('id', user.id)
+
+  if (error) {
+    profileMessage.value = error.message
+    isSavingProfile.value = false
+    return
+  }
+
+  student.value.fullName = fullName
+  student.value.studentId = schoolId
+  student.value.initials = getInitials(fullName)
+  localStorage.setItem('clearease-user-name', fullName)
+  localStorage.setItem('clearease-local-session', JSON.stringify({
+    ...(getSessionUser() || {}),
+    fullName,
+    studentId: schoolId,
+    gradeLevel,
+    section,
+    contactNumber,
+  }))
+  isEditingProfile.value = false
+  profileMessage.value = 'Profile updated successfully.'
+  isSavingProfile.value = false
+}
+
 onMounted(() => {
   syncStudentFromSession()
+  loadProfile()
   window.addEventListener('storage', syncStudentFromSession)
 })
 
@@ -173,23 +270,37 @@ const handleLogOut = async () => {
         <div class="lg:col-span-2 space-y-6">
           
           <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-4">Personal Information</h3>
+            <div class="flex items-center justify-between border-b pb-2 mb-4">
+              <h3 class="text-lg font-semibold text-gray-800">Personal Information</h3>
+              <button class="rounded-md bg-[#8d63e8] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#7f55dd]" @click="toggleProfileEdit">
+                {{ isEditingProfile ? 'Cancel' : 'Edit Profile' }}
+              </button>
+            </div>
+            <p v-if="profileMessage" class="mb-4 text-sm" :class="profileMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'">{{ profileMessage }}</p>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
               <div>
                 <p class="text-sm text-gray-500">Full Name</p>
-                <p class="font-medium text-gray-800">{{ student.fullName }}</p>
+                <input v-if="isEditingProfile" v-model="student.fullName" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <p v-else class="font-medium text-gray-800">{{ student.fullName }}</p>
               </div>
               <div>
                 <p class="text-sm text-gray-500">School ID</p>
-                <p class="font-medium text-gray-800">{{ student.studentId }}</p>
+                <input v-if="isEditingProfile" v-model="student.studentId" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <p v-else class="font-medium text-gray-800">{{ student.studentId }}</p>
               </div>
               <div>
                 <p class="text-sm text-gray-500">Grade Level</p>
-                <p class="font-medium text-gray-800">{{ student.gradeLevel }}</p>
+                <select v-if="isEditingProfile" v-model="student.gradeLevel" class="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" @change="handleGradeLevelChange">
+                  <option v-for="gradeLevel in gradeLevelOptions" :key="gradeLevel" :value="gradeLevel">{{ gradeLevel }}</option>
+                </select>
+                <p v-else class="font-medium text-gray-800">{{ student.gradeLevel }}</p>
               </div>
               <div>
                 <p class="text-sm text-gray-500">Section</p>
-                <p class="font-medium text-gray-800">{{ student.section }}</p>
+                <select v-if="isEditingProfile" v-model="student.section" class="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm">
+                  <option v-for="section in sectionOptions" :key="section" :value="section">{{ section }}</option>
+                </select>
+                <p v-else class="font-medium text-gray-800">{{ student.section }}</p>
               </div>
               <div>
                 <p class="text-sm text-gray-500">Email Address</p>
@@ -197,9 +308,13 @@ const handleLogOut = async () => {
               </div>
               <div>
                 <p class="text-sm text-gray-500">Contact Number</p>
-                <p class="font-medium text-gray-800">{{ student.contactNumber }}</p>
+                <input v-if="isEditingProfile" v-model="student.contactNumber" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm" />
+                <p v-else class="font-medium text-gray-800">{{ student.contactNumber }}</p>
               </div>
             </div>
+            <button v-if="isEditingProfile" class="mt-5 rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50" :disabled="isSavingProfile" @click="saveProfile">
+              {{ isSavingProfile ? 'Saving...' : 'Save Profile' }}
+            </button>
           </div>
 
           <!-- Account Security -->

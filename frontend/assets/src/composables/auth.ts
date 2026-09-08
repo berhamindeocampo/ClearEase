@@ -172,11 +172,6 @@ export const useAuth = () => {
       throw new Error(`No valid profile role was found for ${authData.user.email || email}. Check the profiles table and RLS policy.`)
     }
 
-    if (userRole === 'unlisted') {
-      await supabase.auth.signOut()
-      throw new Error('Your account is waiting for an administrator to assign a position.')
-    }
-
     const fullName = profile?.full_name || email
     const studentId = profile?.student_id || ''
 

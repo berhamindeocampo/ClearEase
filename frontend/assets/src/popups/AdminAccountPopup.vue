@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { supabase } from '../composables/auth'
 
 const props = defineProps<{ account: { name: string; role: string; id: string; status: string; profileId: string }; canAssign?: boolean }>()
-const emit = defineEmits<{ (event: 'close'): void; (event: 'assigned'): void }>()
+const emit = defineEmits<{ (event: 'close'): void; (event: 'assigned', role: 'student' | 'school_personnel'): void }>()
 const selectedRole = ref<'student' | 'school_personnel'>('student')
 const isSaving = ref(false)
 const errorMessage = ref('')
@@ -14,7 +14,7 @@ async function assignRole() {
 	errorMessage.value = ''
 	const { error } = await supabase.from('profiles').update({ role: selectedRole.value }).eq('id', props.account.profileId)
 	if (error) errorMessage.value = error.message
-	else emit('assigned')
+	else emit('assigned', selectedRole.value)
 	isSaving.value = false
 }
 </script>
