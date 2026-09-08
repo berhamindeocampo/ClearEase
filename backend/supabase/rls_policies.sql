@@ -290,7 +290,13 @@ as $$
   left join public.profiles p on p.id = s.student_id
   left join public.requirements r on r.id = s.requirement_id
   left join public.departments d on d.id = r.department_id
-  where public.current_role() in ('admin', 'school_personnel');
+  where public.current_role() = 'admin'
+     or exists (
+       select 1
+       from public.department_personnel dp
+       where dp.department_id = r.department_id
+         and dp.personnel_id = auth.uid()
+     );
 $$;
 
 revoke execute on function public.get_staff_clearance_submissions() from public;
@@ -309,7 +315,14 @@ as $$
 declare
   submission public.clearance_submissions;
 begin
-  if public.current_role() not in ('admin', 'school_personnel') then
+  if public.current_role() <> 'admin' and not exists (
+    select 1
+    from public.clearance_submissions cs
+    join public.requirements req on req.id = cs.requirement_id
+    join public.department_personnel dp on dp.department_id = req.department_id
+    where cs.id = p_submission_id
+      and dp.personnel_id = auth.uid()
+  ) then
     raise exception 'Only staff can review submissions';
   end if;
 
@@ -389,7 +402,16 @@ with check (id = auth.uid());
 drop policy if exists "departments_read_authenticated" on public.departments;
 create policy "departments_read_authenticated"
 on public.departments for select to authenticated
-using (true);
+using (
+  public.current_role() = 'admin'
+  or public.current_role() in ('student', 'unlisted')
+  or exists (
+    select 1
+    from public.department_personnel dp
+    where dp.department_id = departments.id
+      and dp.personnel_id = auth.uid()
+  )
+);
 
 drop policy if exists "departments_admin_manage" on public.departments;
 create policy "departments_admin_manage"
@@ -405,24 +427,60 @@ with check (public.current_role() = 'admin');
 drop policy if exists "requirements_read_authenticated" on public.requirements;
 create policy "requirements_read_authenticated"
 on public.requirements for select to authenticated
-using (true);
+using (
+  public.current_role() in ('admin', 'student', 'unlisted')
+  or exists (
+    select 1 from public.department_personnel dp
+    where dp.department_id = requirements.department_id
+      and dp.personnel_id = auth.uid()
+  )
+);
 
 drop policy if exists "requirements_staff_manage" on public.requirements;
 create policy "requirements_staff_manage"
 on public.requirements for all to authenticated
-using (public.current_role() in ('admin', 'school_personnel'))
-with check (public.current_role() in ('admin', 'school_personnel'));
+using (
+  public.current_role() = 'admin'
+  or exists (
+    select 1
+    from public.department_personnel dp
+    where dp.department_id = requirements.department_id
+      and dp.personnel_id = auth.uid()
+  )
+)
+with check (
+  public.current_role() = 'admin'
+  or exists (
+    select 1
+    from public.department_personnel dp
+    where dp.department_id = requirements.department_id
+      and dp.personnel_id = auth.uid()
+  )
+);
 
 drop policy if exists "requirements_staff_insert" on public.requirements;
 create policy "requirements_staff_insert"
 on public.requirements for insert to authenticated
-with check (public.current_role() in ('admin', 'school_personnel'));
+with check (
+  public.current_role() = 'admin'
+  or exists (
+    select 1 from public.department_personnel dp
+    where dp.department_id = requirements.department_id
+      and dp.personnel_id = auth.uid()
+  )
+);
 
 drop policy if exists "requirements_staff_update" on public.requirements;
 create policy "requirements_staff_update"
 on public.requirements for update to authenticated
-using (public.current_role() in ('admin', 'school_personnel'))
-with check (public.current_role() in ('admin', 'school_personnel'));
+using (
+  public.current_role() = 'admin'
+  or exists (select 1 from public.department_personnel dp where dp.department_id = requirements.department_id and dp.personnel_id = auth.uid())
+)
+with check (
+  public.current_role() = 'admin'
+  or exists (select 1 from public.department_personnel dp where dp.department_id = requirements.department_id and dp.personnel_id = auth.uid())
+);
 
 -- Students see and create only their own submissions.
 drop policy if exists "submissions_student_read_own" on public.clearance_submissions;
@@ -447,7 +505,16 @@ with check (student_id = auth.uid());
 drop policy if exists "submissions_staff_read" on public.clearance_submissions;
 create policy "submissions_staff_read"
 on public.clearance_submissions for select to authenticated
-using (public.current_role() in ('admin', 'school_personnel'));
+using (
+  public.current_role() = 'admin'
+  or exists (
+    select 1
+    from public.requirements r
+    join public.department_personnel dp on dp.department_id = r.department_id
+    where r.id = clearance_submissions.requirement_id
+      and dp.personnel_id = auth.uid()
+  )
+);
 
 drop policy if exists "submissions_staff_review" on public.clearance_submissions;
 create policy "submissions_staff_review"

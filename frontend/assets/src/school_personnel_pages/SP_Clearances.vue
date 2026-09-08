@@ -21,29 +21,42 @@ const isLoading = ref(true)
 const loadError = ref('')
 
 async function loadClearances() {
-  const [submissionsResult, profilesResult, departmentsResult, requirementsResult] = await Promise.all([
+  const [submissionsResult, profilesResult, departmentsResult, requirementsResult, assignmentsResult] = await Promise.all([
     supabase ? supabase.rpc('get_staff_clearance_submissions') : Promise.resolve({ data: null, error: { message: 'Supabase is not configured.' } }),
     fetchRows('profiles'),
     fetchRows('departments'),
     fetchRows('requirements'),
+    fetchRows('department_personnel'),
   ])
   const result = {
     data: (submissionsResult.data ?? []) as Record<string, any>[],
     error: submissionsResult.error?.message ?? null,
   }
-  loadError.value = result.error || profilesResult.error || departmentsResult.error || requirementsResult.error || ''
+  loadError.value = result.error || profilesResult.error || departmentsResult.error || requirementsResult.error || assignmentsResult.error || ''
+  const assignedDepartmentIds = new Set(assignmentsResult.data.map((assignment) => String(assignment.department_id)))
   const status = (row: Record<string, any>) => String(row.status || 'Pending')
   const rows = result.data
   departments.value = departmentsResult.data
+    .filter((department) => assignedDepartmentIds.has(String(department.id)))
     .map((department) => String(department.name || department.title || '').trim())
     .filter(Boolean)
     .sort((left, right) => left.localeCompare(right))
-  const profiles = new Map(profilesResult.data.map((profile) => [String(profile.id), String(profile.full_name || profile.email || profile.id)]))
-  const requirements = new Map(requirementsResult.data.map((requirement) => [String(requirement.id), requirement]))
+  const profiles = new Map(profilesResult.data.map((profile) => [String(profile.id), profile]))
+  const requirements = new Map(requirementsResult.data.filter((requirement) => assignedDepartmentIds.has(String(requirement.department_id))).map((requirement) => [String(requirement.id), requirement]))
+  const departmentGrades = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.grade_level || 'Others').trim().toLowerCase()]))
+  const visibleRows = rows.filter((row) => {
+    const requirement = requirements.get(String(row.requirement_id))
+    const student = profiles.get(String(row.student_id))
+    if (!requirement || !student) return false
+
+    const departmentGrade = departmentGrades.get(String(requirement.department_id))
+    const studentGrade = String(student.grade_level || '').trim().toLowerCase()
+    return Boolean(departmentGrade && studentGrade && departmentGrade === studentGrade)
+  })
   const departmentNames = new Map(departmentsResult.data.map((department) => [String(department.id), String(department.name || department.title || department.id)]))
-  clearances.value = rows.map((row) => ({
+  clearances.value = visibleRows.map((row) => ({
     id: String(row.id),
-    student: String(row.student_name || profiles.get(String(row.student_id)) || row.full_name || row.student_id || 'Unknown student'),
+    student: String(row.student_name || profiles.get(String(row.student_id))?.full_name || profiles.get(String(row.student_id))?.email || row.full_name || row.student_id || 'Unknown student'),
     requirement: String(row.requirement_name || row.title || requirements.get(String(row.requirement_id))?.title || row.requirement_id || 'Requirement'),
     department: String(row.department_name || departmentNames.get(String(requirements.get(String(row.requirement_id))?.department_id)) || row.department || '—'),
     submitted: relativeDate(row.submitted_at || row.created_at),
@@ -51,7 +64,7 @@ async function loadClearances() {
     remarks: String(row.remarks || ''),
     status: status(row).toLowerCase() === 'approved' ? 'Approved' : status(row).toLowerCase() === 'rejected' ? 'Rejected' : status(row).toLowerCase() === 'in review' ? 'In Review' : 'Pending',
   }))
-  const count = (values: string[]) => rows.filter((row) => values.includes(status(row).toLowerCase())).length
+  const count = (values: string[]) => visibleRows.filter((row) => values.includes(status(row).toLowerCase())).length
   stats.value = [
     { value: profilesResult.data.filter((profile) => String(profile.role || '').trim().toLowerCase() === 'student').length, label: 'Total Students', icon: '▣', tone: 'purple' },
     { value: count(['pending', 'in review', 'in_progress']), label: 'In Progress', icon: '◔', tone: 'orange' },

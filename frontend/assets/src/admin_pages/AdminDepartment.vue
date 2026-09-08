@@ -18,6 +18,7 @@ const selectedDepartment = ref<(typeof departments.value)[number] | null>(null)
 const selectedDepartmentDetail = ref<(typeof departments.value)[number] | null>(null)
 const adviserOptions = ref(['N/A'])
 const studentOptions = ref<StudentOption[]>([])
+const adviserIds = ref(new Map<string, string>())
 const activeLevel = ref('Grade 7')
 
 const filteredDepartments = computed(() => departments.value.filter((item) =>
@@ -30,10 +31,25 @@ async function addDepartment(form: { name: string; adviser: string; gradeLevel: 
     return
   }
 
-  const { error } = await supabase.from('departments').insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevel })
+  const { data: createdDepartment, error } = await supabase
+    .from('departments')
+    .insert({ name: form.name.trim(), adviser: form.adviser.trim(), grade_level: form.gradeLevel })
+    .select('id')
+    .single()
   if (error) {
     loadError.value = error.message
     return
+  }
+
+  if (createdDepartment && adviserIds.value.has(form.adviser)) {
+    const { error: assignmentError } = await supabase.from('department_personnel').insert({
+      department_id: createdDepartment.id,
+      personnel_id: adviserIds.value.get(form.adviser),
+    })
+    if (assignmentError) {
+      loadError.value = assignmentError.message
+      return
+    }
   }
 
   activePopup.value = null
@@ -86,6 +102,23 @@ async function updateDepartment(departmentId: string, name: string, adviser: str
     }
   }
 
+  const { error: clearAssignmentError } = await supabase.from('department_personnel').delete().eq('department_id', departmentId)
+  if (clearAssignmentError) {
+    loadError.value = clearAssignmentError.message
+    return
+  }
+
+  if (adviserIds.value.has(adviser)) {
+    const { error: assignmentError } = await supabase.from('department_personnel').insert({
+      department_id: departmentId,
+      personnel_id: adviserIds.value.get(adviser),
+    })
+    if (assignmentError) {
+      loadError.value = assignmentError.message
+      return
+    }
+  }
+
   activePopup.value = null
   selectedDepartment.value = null
   await loadDepartments()
@@ -98,9 +131,9 @@ async function loadDepartments() {
     supabase
       ? supabase.rpc('get_admin_profiles')
       : Promise.resolve({ data: null, error: { message: 'Supabase is not configured.' } }),
-      supabase
-        ? supabase.from('department_students').select('department_id, student_id')
-        : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
+    supabase
+      ? supabase.from('department_students').select('department_id, student_id')
+      : Promise.resolve({ data: [], error: { message: 'Supabase is not configured.' } }),
   ])
   const profileRows = (profilesResult.data ?? []) as Record<string, any>[]
   const membershipResponse = membershipResult as unknown as { data?: Record<string, any>[] | null; error?: { message?: string } | string | null }
@@ -110,10 +143,15 @@ async function loadDepartments() {
     : membershipResponse.error?.message || ''
   const membershipTableMissing = membershipErrorMessage.toLowerCase().includes('department_students') || membershipErrorMessage.toLowerCase().includes('schema cache')
   loadError.value = departmentResult.error || requirementResult.error || profilesResult.error?.message || (membershipTableMissing ? '' : membershipErrorMessage)
-  const personnelNames = profileRows
+  const personnelProfiles = profileRows
     .filter((profile) => String(profile.role || '').trim().toLowerCase() === 'school_personnel')
-    .map((profile) => String(profile.full_name || profile.fullName || profile.name || profile.email || '').trim())
-    .filter(Boolean)
+  const adviserMap = new Map<string, string>()
+  personnelProfiles.forEach((profile) => {
+    const name = String(profile.full_name || profile.fullName || profile.name || profile.email || '').trim()
+    if (name) adviserMap.set(name, String(profile.id))
+  })
+  adviserIds.value = adviserMap
+  const personnelNames = Array.from(adviserIds.value.keys())
   adviserOptions.value = ['N/A', ...Array.from(new Set(personnelNames))]
   studentOptions.value = profileRows
     .filter((profile) => String(profile.role || '').trim().toLowerCase() === 'student')
