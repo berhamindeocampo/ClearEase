@@ -168,7 +168,7 @@ onMounted(loadRequirements)
           <h2 class="text-lg sm:text-xl font-black text-slate-900">Requirements List</h2>
         </div>
 
-        <div class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#edf0f4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
+        <div class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 border-b border-[#aeb6c4] bg-[#f3f4f6] text-xs sm:text-sm font-semibold text-slate-600 whitespace-nowrap">
           <div>Requirements</div>
           <div>Department</div>
           <div>Required Document</div>
@@ -180,8 +180,8 @@ onMounted(loadRequirements)
         <div v-if="isLoading" class="px-4 py-8 text-center text-sm text-slate-500">Loading requirements...</div>
         <div v-else-if="loadError" class="px-4 py-8 text-center text-sm text-red-600">{{ loadError }}</div>
         <div v-else-if="filteredRequirements.length === 0" class="px-4 py-8 text-center text-sm text-slate-500">No requirements found.</div>
-        <div v-for="item in filteredRequirements" v-else :key="item.id" class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#edf0f4] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
-          <div>{{ item.name }}</div>
+        <div v-for="item in filteredRequirements" v-else :key="item.id" class="grid grid-cols-[1.2fr_1.2fr_1.1fr_1.5fr_0.8fr_0.8fr] gap-3 px-4 sm:px-5 py-3 sm:py-4 border-b border-[#b8c0cc] last:border-b-0 items-center text-xs sm:text-sm text-slate-700">
+          <div class="flex min-w-0 items-center gap-2 font-medium"><span class="h-2 w-2 shrink-0 rounded-full bg-[#8d63e8]" aria-hidden="true"></span><span class="truncate">{{ item.name }}</span></div>
           <div>{{ item.department }}</div>
           <div>{{ item.requiredDocument }}</div>
           <div>{{ item.instruction }}</div>
