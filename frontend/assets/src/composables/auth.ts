@@ -7,7 +7,7 @@ const LOCAL_SESSION_KEY = 'clearease-local-session'
 const LEGACY_USER_NAME_KEY = 'clearease-user-name'
 const LEGACY_USER_EMAIL_KEY = 'clearease-user-email'
 
-export type UserRole = 'student' | 'admin' | 'school_personnel'
+export type UserRole = 'student' | 'admin' | 'school_personnel' | 'unlisted'
 
 export interface Profile {
   id: string
@@ -27,7 +27,7 @@ export interface SignUpData {
 
 const normalizeRole = (role: unknown): UserRole | null => {
   const normalizedRole = String(role || '').trim().toLowerCase()
-  return normalizedRole === 'student' || normalizedRole === 'admin' || normalizedRole === 'school_personnel'
+  return normalizedRole === 'student' || normalizedRole === 'admin' || normalizedRole === 'school_personnel' || normalizedRole === 'unlisted'
     ? normalizedRole
     : null
 }
@@ -94,7 +94,7 @@ export const useAuth = () => {
   }
 
   const signUp = async (data: SignUpData) => {
-    const assignedRole: UserRole = data.role || 'student'
+    const assignedRole: UserRole = data.role || 'unlisted'
 
     if (!supabase) {
       saveLocalSession({
@@ -170,6 +170,11 @@ export const useAuth = () => {
     if (!profile || !userRole) {
       await supabase.auth.signOut()
       throw new Error(`No valid profile role was found for ${authData.user.email || email}. Check the profiles table and RLS policy.`)
+    }
+
+    if (userRole === 'unlisted') {
+      await supabase.auth.signOut()
+      throw new Error('Your account is waiting for an administrator to assign a position.')
     }
 
     const fullName = profile?.full_name || email

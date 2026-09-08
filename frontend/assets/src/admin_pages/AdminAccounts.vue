@@ -4,7 +4,7 @@ import AdminHeader from '../headers/AdminHeader.vue'
 import AdminAccountPopup from '../popups/AdminAccountPopup.vue'
 import { supabase } from '../composables/auth'
 
-type AccountType = 'students' | 'school_personnel'
+type AccountType = 'unlisted' | 'students' | 'school_personnel'
 
 interface Account {
   name: string
@@ -13,6 +13,7 @@ interface Account {
   status: string
   yearLevel: string
   email: string
+  profileId: string
 }
 
 const activeType = ref<AccountType>('students')
@@ -30,11 +31,12 @@ const getStatus = (record: Record<string, unknown>) => {
 
 const mapAccount = (record: Record<string, unknown>, type: AccountType): Account => ({
   name: getName(record),
-  role: type === 'students' ? 'Student' : 'School Personnel',
+  role: type === 'students' ? 'Student' : type === 'school_personnel' ? 'School Personnel' : 'Unlisted',
   id: String(record.student_id || record.id || '—'),
   status: getStatus(record),
   yearLevel: String(record.year_level || record.grade_level || (type === 'students' ? 'Grade 12' : '—')),
   email: String(record.email || '—'),
+  profileId: String(record.id || ''),
 })
 
 async function fetchAccounts() {
@@ -55,7 +57,7 @@ async function fetchAccounts() {
     accounts.value = []
     errorMessage.value = error.message
   } else {
-    const role = activeType.value === 'students' ? 'student' : 'school_personnel'
+    const role = activeType.value === 'students' ? 'student' : activeType.value === 'school_personnel' ? 'school_personnel' : 'unlisted'
     accounts.value = (data ?? [])
       .filter((record: Record<string, unknown>) => String(record.role || '').trim().toLowerCase() === role)
       .sort((left: Record<string, unknown>, right: Record<string, unknown>) => getName(left).localeCompare(getName(right)))
@@ -80,7 +82,8 @@ onMounted(fetchAccounts)
     <main class="max-w-[1280px] mx-auto px-4 py-6 sm:px-6 sm:py-7">
       <h1 class="text-3xl font-black text-slate-900 mb-4">User Accounts</h1>
 
-      <div class="mb-5 flex gap-2 text-sm font-medium">
+      <div class="mb-5 flex flex-wrap gap-2 text-sm font-medium">
+        <button :class="activeType === 'unlisted' ? 'bg-[#8d63e8] text-white' : 'bg-white text-[#4b5563]'" class="rounded-full border border-[#d5d7df] px-3.5 py-1.5 shadow-sm" @click="selectAccountType('unlisted')">Unlisted</button>
         <button :class="activeType === 'students' ? 'bg-[#8d63e8] text-white' : 'bg-white text-[#4b5563]'" class="rounded-full border border-[#d5d7df] px-3.5 py-1.5 shadow-sm" @click="selectAccountType('students')">Students</button>
         <button :class="activeType === 'school_personnel' ? 'bg-[#8d63e8] text-white' : 'bg-white text-[#4b5563]'" class="rounded-full border border-[#d5d7df] px-3.5 py-1.5 shadow-sm" @click="selectAccountType('school_personnel')">School Personnel</button>
       </div>
@@ -89,7 +92,7 @@ onMounted(fetchAccounts)
         <div class="grid min-w-[760px] grid-cols-[1.2fr_1.5fr_0.9fr_1fr_1.3fr] gap-3 border-b border-[#e5e7eb] bg-[#f3f4f6] px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
           <div>ID</div>
           <div>Name</div>
-          <div>{{ activeType === 'students' ? 'Year Level' : 'Role' }}</div>
+          <div>{{ activeType === 'students' ? 'Year Level' : activeType === 'unlisted' ? 'Position' : 'Role' }}</div>
           <div>Account Status</div>
           <div class="text-right pr-2">Action</div>
         </div>
@@ -113,12 +116,12 @@ onMounted(fetchAccounts)
           </div>
           <div class="text-right">
             <button class="rounded-lg bg-[#8d63e8] px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-[#7f55dd]" @click="selectedAccount = account">
-              View Account Details <span class="ml-1">→</span>
+              {{ activeType === 'unlisted' ? 'Manage Account' : 'View Account Details' }} <span class="ml-1">→</span>
             </button>
           </div>
         </div>
       </div>
     </main>
-    <AdminAccountPopup v-if="selectedAccount" :account="selectedAccount" @close="selectedAccount = null" />
+    <AdminAccountPopup v-if="selectedAccount" :account="selectedAccount" :can-assign="activeType === 'unlisted'" @close="selectedAccount = null" @assigned="fetchAccounts" />
   </div>
 </template>

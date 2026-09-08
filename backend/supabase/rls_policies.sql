@@ -70,9 +70,9 @@ begin
     coalesce(new.raw_user_meta_data ->> 'full_name', ''),
     nullif(new.raw_user_meta_data ->> 'student_id', ''),
     case
-      when new.raw_user_meta_data ->> 'role' in ('admin', 'school_personnel')
+      when new.raw_user_meta_data ->> 'role' in ('admin', 'school_personnel', 'student')
         then new.raw_user_meta_data ->> 'role'
-      else 'student'
+      else 'unlisted'
     end
   )
   on conflict (id) do update set
