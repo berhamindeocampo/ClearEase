@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { supabase } from '../composables/auth'
 
 interface Requirement {
@@ -21,6 +21,8 @@ const isLoadingPreview = ref(false)
 
 const isPdf = () => props.requirement.fileName.toLowerCase().endsWith('.pdf')
 const isImage = () => /\.(png|jpe?g|gif|webp)$/i.test(props.requirement.fileName)
+const isOfficeDocument = () => /\.(docx?|pptx?|xlsx?)$/i.test(props.requirement.fileName)
+const officePreviewUrl = computed(() => previewUrl.value ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewUrl.value)}` : '')
 
 async function loadPreview() {
   if (!supabase || !props.requirement.filePath) return
@@ -53,11 +55,11 @@ onMounted(loadPreview)
       </dl>
         <div v-if="props.requirement.filePath" class="mt-5">
           <p class="font-semibold text-slate-500">Preview</p>
-          <div v-if="isLoadingPreview" class="mt-2 rounded-lg bg-slate-50 px-3 py-8 text-center text-sm text-slate-500">Loading preview...</div>
+          <div v-if="isLoadingPreview" class="mt-2 flex h-40 items-center justify-center rounded-lg bg-slate-50 text-sm text-slate-500">Loading preview...</div>
           <div v-else-if="previewError" class="mt-2 rounded-lg bg-red-50 px-3 py-3 text-sm text-red-600">{{ previewError }}</div>
-          <iframe v-else-if="previewUrl && isPdf()" :src="previewUrl" title="Uploaded document preview" class="mt-2 h-72 w-full rounded-lg border border-slate-200"></iframe>
-          <img v-else-if="previewUrl && isImage()" :src="previewUrl" alt="Uploaded document preview" class="mt-2 max-h-72 w-full rounded-lg border border-slate-200 object-contain" />
-          <a v-else-if="previewUrl" :href="previewUrl" target="_blank" rel="noopener noreferrer" class="mt-2 inline-flex rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white">Open file</a>
+          <iframe v-else-if="previewUrl && (isPdf() || isOfficeDocument())" :src="isOfficeDocument() ? officePreviewUrl : previewUrl" title="Uploaded document preview" class="mt-2 h-40 w-full rounded-lg border border-slate-200"></iframe>
+          <img v-else-if="previewUrl && isImage()" :src="previewUrl" alt="Uploaded document preview" class="mt-2 h-40 w-full rounded-lg border border-slate-200 object-contain" />
+          <div v-else-if="previewUrl" class="mt-2 flex h-40 items-center justify-center rounded-lg bg-slate-50 px-3 text-center text-sm text-slate-500">Preview unavailable for this file type.</div>
         </div>
       <div class="mt-6 flex justify-end"><button type="button" class="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white" @click="emit('close')">Close</button></div>
     </section>
