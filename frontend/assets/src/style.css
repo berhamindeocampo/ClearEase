@@ -28,12 +28,16 @@
 }
 
 :root[data-theme='dark'] .bg-\[\#f0efff\],
-:root[data-theme='dark'] .bg-\[\#f0effc\] {
+:root[data-theme='dark'] .bg-\[\#f0effc\],
+:root[data-theme='dark'] .bg-\[\#f1eefb\],
+:root[data-theme='dark'] .bg-\[\#f4f5f8\],
+:root[data-theme='dark'] .bg-\[\#dfeaf4\] {
 	background-color: #111827 !important;
 }
 
 :root[data-theme='dark'] .bg-\[\#f2f1f4\],
 :root[data-theme='dark'] .bg-\[\#f3f4f6\],
+:root[data-theme='dark'] .bg-\[\#f7f7fb\],
 :root[data-theme='dark'] .bg-slate-50 {
 	background-color: #1f2937 !important;
 }
@@ -98,11 +102,64 @@
     background-color: #273449 !important;
 }
 
+:root[data-theme='dark'] .bg-\[\#eee7ff\],
+:root[data-theme='dark'] .bg-\[\#f3ebff\],
+:root[data-theme='dark'] .bg-\[\#faf8ff\],
+:root[data-theme='dark'] .bg-\[\#ede9fe\],
+:root[data-theme='dark'] .bg-\[\#f0e7ff\],
+:root[data-theme='dark'] .bg-\[\#f2ebff\],
+:root[data-theme='dark'] .bg-\[\#f3edff\],
+:root[data-theme='dark'] .bg-\[\#e7e2ff\] {
+    background-color: #30264f !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#f4f4f6\],
+:root[data-theme='dark'] .bg-\[\#f2f1f4\] {
+    background-color: #1f2937 !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#fff0dc\],
+:root[data-theme='dark'] .bg-\[\#fdf1d1\] {
+    background-color: #493516 !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#d9f9ed\],
+:root[data-theme='dark'] .bg-\[\#dff7eb\],
+:root[data-theme='dark'] .bg-\[\#def9ea\],
+:root[data-theme='dark'] .bg-\[\#daf9ea\],
+:root[data-theme='dark'] .bg-\[\#e8f7ee\] {
+    background-color: #123b32 !important;
+}
+
+:root[data-theme='dark'] .bg-\[\#ffd7d7\],
+:root[data-theme='dark'] .bg-\[\#ffd6d6\],
+:root[data-theme='dark'] .bg-\[\#ffdfe2\],
+:root[data-theme='dark'] .bg-\[\#ffdfe4\],
+:root[data-theme='dark'] .bg-\[\#ffe4e6\],
+:root[data-theme='dark'] .bg-\[\#fbe5ea\] {
+    background-color: #4a252b !important;
+}
+
+:root[data-theme='dark'] .hover\:bg-\[\#faf8ff\]:hover,
+:root[data-theme='dark'] .hover\:bg-\[\#f7f3ff\]:hover,
+:root[data-theme='dark'] .hover\:bg-slate-100:hover,
+:root[data-theme='dark'] .hover\:bg-slate-50:hover {
+    background-color: #30264f !important;
+}
+
 :root[data-theme='dark'] .text-slate-700,
 :root[data-theme='dark'] .text-gray-700,
 :root[data-theme='dark'] .text-gray-600,
 :root[data-theme='dark'] .text-gray-500 {
     color: #cbd5e1 !important;
+}
+
+:root[data-theme='dark'] .text-\[\#111111\],
+:root[data-theme='dark'] .text-\[\#444444\],
+:root[data-theme='dark'] .text-\[\#4b5563\],
+:root[data-theme='dark'] .text-\[\#5125bd\],
+:root[data-theme='dark'] .text-\[\#7c4fe0\] {
+    color: #e5e7eb !important;
 }
 
 :root[data-theme='dark'] .text-rose-500 {
