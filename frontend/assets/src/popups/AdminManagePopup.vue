@@ -11,6 +11,7 @@ const sectionOptions = ['N/A', 'STEM', 'GAS']
 const sections = ref((props.department.section || 'N/A').split(',').map((section) => section.trim()).filter((section) => sectionOptions.includes(section)))
 const showGradeMenu = ref(false)
 const showSectionMenu = ref(false)
+const showDeleteConfirmation = ref(false)
 
 function toggleSelection(values: string[], value: string) {
 	const index = values.indexOf(value)
@@ -22,9 +23,12 @@ function toggleSelection(values: string[], value: string) {
 }
 
 function confirmDelete() {
-	if (window.confirm(`Delete the ${props.department.name} department?`)) {
-		emit('delete', props.department.id)
-	}
+	showDeleteConfirmation.value = true
+}
+
+function deleteDepartment() {
+	showDeleteConfirmation.value = false
+	emit('delete', props.department.id)
 }
 
 function saveChanges() {
@@ -55,5 +59,15 @@ function saveChanges() {
 			</div>
 			<div class="flex shrink-0 gap-3 border-t border-slate-200 bg-white px-6 py-4"><button class="flex-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600" @click="confirmDelete">Delete</button><button class="flex-1 rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white" @click="saveChanges">Save</button></div>
 		</section>
+		<div v-if="showDeleteConfirmation" class="absolute inset-0 z-10 flex items-center justify-center bg-slate-950/40 p-4" @click.self="showDeleteConfirmation = false">
+			<section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="alertdialog" aria-modal="true" aria-labelledby="delete-department-title" aria-describedby="delete-department-description">
+				<h3 id="delete-department-title" class="text-lg font-bold text-slate-900">Delete department?</h3>
+				<p id="delete-department-description" class="mt-2 text-sm text-slate-600">Delete the {{ props.department.name }} department? This action cannot be undone.</p>
+				<div class="mt-6 flex justify-end gap-3">
+					<button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" @click="showDeleteConfirmation = false">Cancel</button>
+					<button type="button" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700" @click="deleteDepartment">Delete department</button>
+				</div>
+			</section>
+		</div>
 	</div>
 </template>

@@ -11,6 +11,7 @@ const isLoading = ref(true)
 const loadError = ref('')
 const activePopup = ref<'add' | 'edit' | null>(null)
 const selectedRequirement = ref<(typeof requirements.value)[number] | null>(null)
+const pendingDeleteRequirement = ref<(typeof requirements.value)[number] | null>(null)
 const searchQuery = ref('')
 const selectedDepartment = ref('all')
 
@@ -83,7 +84,7 @@ async function updateRequirement(form: RequirementForm) {
 }
 
 async function deleteRequirement(requirement: (typeof requirements.value)[number]) {
-  if (!supabase || !window.confirm(`Delete the requirement "${requirement.name}"? This may also remove related submissions.`)) return
+  if (!supabase) return
 
   const { error } = await supabase.from('requirements').delete().eq('id', requirement.id)
   if (error) {
@@ -93,6 +94,17 @@ async function deleteRequirement(requirement: (typeof requirements.value)[number
 
   if (selectedRequirement.value?.id === requirement.id) selectedRequirement.value = null
   await loadRequirements()
+}
+
+function requestDeleteRequirement(requirement: (typeof requirements.value)[number]) {
+  pendingDeleteRequirement.value = requirement
+}
+
+async function confirmDeleteRequirement() {
+  if (!pendingDeleteRequirement.value) return
+  const requirement = pendingDeleteRequirement.value
+  pendingDeleteRequirement.value = null
+  await deleteRequirement(requirement)
 }
 
 async function loadRequirements() {
@@ -203,7 +215,7 @@ onMounted(loadRequirements)
             <button class="bg-[#8d63e8] text-white rounded-lg px-2 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-sm font-semibold shadow-sm hover:bg-[#7f55dd]" @click="selectedRequirement = item; activePopup = 'edit'">
               Edit
             </button>
-            <button class="rounded-lg border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 sm:px-3 sm:py-1.5 sm:text-sm" @click="deleteRequirement(item)">
+            <button class="rounded-lg border border-red-200 px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 sm:px-3 sm:py-1.5 sm:text-sm" @click="requestDeleteRequirement(item)">
               Delete
             </button>
           </div>
@@ -212,5 +224,16 @@ onMounted(loadRequirements)
     </main>
     <SPAddRequirementPopup v-if="activePopup === 'add'" :departments="departments" @close="activePopup = null" @save="addRequirement" />
     <SPEditRequirementPopup v-if="activePopup === 'edit' && selectedRequirement" :requirement="selectedRequirement" :departments="departments" @close="activePopup = null; selectedRequirement = null" @save="updateRequirement" />
+
+    <div v-if="pendingDeleteRequirement" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/40 p-4" @click.self="pendingDeleteRequirement = null">
+      <section class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl" role="alertdialog" aria-modal="true" aria-labelledby="delete-requirement-title" aria-describedby="delete-requirement-description">
+        <h2 id="delete-requirement-title" class="text-lg font-bold text-slate-900">Delete requirement?</h2>
+        <p id="delete-requirement-description" class="mt-2 text-sm text-slate-600">Delete the requirement "{{ pendingDeleteRequirement.name }}"? This may also remove related submissions.</p>
+        <div class="mt-6 flex justify-end gap-3">
+          <button type="button" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700" @click="pendingDeleteRequirement = null">Cancel</button>
+          <button type="button" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700" @click="confirmDeleteRequirement">Delete requirement</button>
+        </div>
+      </section>
+    </div>
   </div>
 </template>
